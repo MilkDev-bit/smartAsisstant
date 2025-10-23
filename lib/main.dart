@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
 
 void main() {
   runApp(const IaChatApp());
+}
+
+class ChatMessage {
+  final String text;
+  final bool isMe;
+  final bool isLoading;
+
+  ChatMessage({required this.text, required this.isMe, this.isLoading = false});
 }
 
 class IaChatApp extends StatelessWidget {
@@ -59,22 +68,102 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    ChatScreen(),
-    ClientsScreen(),
-    SettingsScreen(),
+  final List<Map<String, String>> _clients = [
+    {'name': 'Juan Pérez', 'phone': '+521234567890'},
+    {'name': 'Ana García', 'phone': '+529876543210'},
+    {'name': 'Carlos Rodríguez', 'phone': '+525555555555'},
   ];
 
-  void _onItemTapped(int index) {
+  final List<ChatMessage> _messages = [
+    ChatMessage(text: '¡Hola! ¿En qué puedo ayudarte hoy?', isMe: false),
+  ];
+
+  void _addClient(String name, String phone) {
     setState(() {
-      _selectedIndex = index;
+      _clients.add({'name': name, 'phone': phone});
+    });
+  }
+
+  String _getSimulatedResponse(String inputText) {
+    String text = inputText.toLowerCase().trim();
+
+    if (text.startsWith('/documentos')) {
+      return '¡Claro! He encontrado 3 documentos que coinciden con tu solicitud:\n\n'
+          '1. *Reporte_Ventas_Q3_2025.pdf*\n   (Modificado: 22/10/2025)\n'
+          '2. *Factura_Cliente_A_Octubre.pdf*\n   (Modificado: 21/10/2025)\n'
+          '3. *Contrato_Proveedor_B_Firmado.docx*\n   (Modificado: 19/10/2025)';
+    } else if (text.startsWith('/productos')) {
+      return '¡Perfecto! Aquí está el inventario y precios de tus productos principales:\n\n'
+          '1. *Clásica (ID: HAM-001)*\n   - Stock: 200 carnes, 180 panes\n   - Precio: \$120.00 MXN\n'
+          '2. *Doble Queso (ID: HAM-002)*\n   - Stock: 150 carnes, 140 panes\n   - Precio: \$160.00 MXN\n'
+          '3. *Papas Gajo (ID: PAP-001)*\n   - Stock: 80 porciones (¡Quedan pocas!)\n   - Precio: \$65.00 MXN';
+    } else if (text.startsWith('/clientes-recientes')) {
+      if (_clients.isEmpty) {
+        return 'Actualmente no tienes clientes registrados.';
+      }
+      String clientList = 'Estos son tus clientes más recientes:\n\n';
+      int count = _clients.length > 3 ? 3 : _clients.length;
+      for (int i = 0; i < count; i++) {
+        clientList +=
+            '- *${_clients[_clients.length - 1 - i]['name']}* (${_clients[_clients.length - 1 - i]['phone']})\n';
+      }
+      return clientList;
+    } else if (text.contains('hola') || text.contains('buenos dias')) {
+      return '¡Hola! Soy tu asistente. ¿En qué puedo ayudarte hoy?\nPuedes usar comandos como `/documentos` o `/productos`.';
+    } else if (text.contains('gracias') || text.contains('muchas gracias')) {
+      return '¡De nada! Estoy aquí para ayudarte. ¿Necesitas algo más?';
+    } else {
+      return 'He procesado tu solicitud sobre "$inputText".\n\nComo soy una simulación, no puedo completar esta tarea específica, pero en la versión final, aquí verías el resultado.';
+    }
+  }
+
+  Future<void> _handleSendPressed(String text) async {
+    if (text.isEmpty) return;
+
+    setState(() {
+      _messages.add(ChatMessage(text: text, isMe: true));
+    });
+
+    setState(() {
+      _messages.add(ChatMessage(text: "...", isMe: false, isLoading: true));
+    });
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    final String responseText = _getSimulatedResponse(text);
+
+    setState(() {
+      _messages.removeWhere((msg) => msg.isLoading);
+      _messages.add(ChatMessage(text: responseText, isMe: false));
+    });
+  }
+
+  void _clearChat() {
+    setState(() {
+      _messages.clear();
+      _messages.add(
+        ChatMessage(
+          text: 'He limpiado el chat. ¿Cómo puedo ayudarte ahora?',
+          isMe: false,
+        ),
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> widgetOptions = <Widget>[
+      ChatScreen(
+        messages: _messages,
+        onSendPressed: _handleSendPressed,
+        onClearChat: _clearChat,
+      ),
+      ClientsScreen(clients: _clients, onAddClient: _addClient),
+      const SettingsScreen(),
+    ];
+
     return Scaffold(
-      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
+      body: Center(child: widgetOptions.elementAt(_selectedIndex)),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -112,7 +201,11 @@ class _MainScreenState extends State<MainScreen> {
               currentIndex: _selectedIndex,
               selectedItemColor: const Color(0xFF4A90E2),
               unselectedItemColor: const Color(0xFF9AA0A6),
-              onTap: _onItemTapped,
+              onTap: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
               showUnselectedLabels: false,
               showSelectedLabels: true,
               type: BottomNavigationBarType.fixed,
@@ -126,7 +219,16 @@ class _MainScreenState extends State<MainScreen> {
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final List<ChatMessage> messages;
+  final Function(String) onSendPressed;
+  final VoidCallback onClearChat;
+
+  const ChatScreen({
+    super.key,
+    required this.messages,
+    required this.onSendPressed,
+    required this.onClearChat,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -134,10 +236,11 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final List<Map<String, String>> _commands = [
     {"icon": "📝", "command": "/documentos", "label": "Documentos"},
     {"icon": "🌐", "command": "/productos", "label": "Productos"},
-    {"icon": "", "command": "/clientes-resientes", "label": "clientes"},
+    {"icon": "👤", "command": "/clientes-recientes", "label": "Clientes"},
   ];
   bool _showCommands = false;
 
@@ -154,12 +257,13 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   void _insertCommand(String command) {
     setState(() {
-      _controller.text = command + " ";
+      _controller.text = "$command ";
       _controller.selection = TextSelection.fromPosition(
         TextPosition(offset: _controller.text.length),
       );
@@ -167,8 +271,117 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  void _handleSendPressed() {
+    final text = _controller.text;
+    if (text.isEmpty) return;
+    widget.onSendPressed(text);
+    _controller.clear();
+    _scrollToBottom();
+  }
+
+  void _scrollToBottom() {
+    Timer(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _showOptionsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: const Icon(
+                    Icons.add_comment_outlined,
+                    color: Color(0xFF4A90E2),
+                  ),
+                  title: const Text(
+                    'Nuevo Chat',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    widget.onClearChat();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.attach_file,
+                    color: Color(0xFF5F6368),
+                  ),
+                  title: const Text(
+                    'Adjuntar Archivo (Simulado)',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _showPlaceholderDialog(context, "Adjuntar Archivo");
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: Color(0xFF5F6368),
+                  ),
+                  title: const Text(
+                    'Tomar Foto (Simulado)',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _showPlaceholderDialog(context, "Tomar Foto");
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPlaceholderDialog(BuildContext context, String title) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text('Aquí se implementaría la lógica para "$title".'),
+          actions: [
+            TextButton(
+              child: const Text('Cerrar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollToBottom();
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -210,19 +423,21 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView(
+            child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16.0),
-              children: const [
-                ChatBubble(
-                  text: '¡Hola! ¿En qué puedo ayudarte hoy?',
-                  isMe: false,
-                ),
-                SizedBox(height: 12),
-                ChatBubble(
-                  text: 'Hola, necesito un resumen del último reporte.',
-                  isMe: true,
-                ),
-              ],
+              itemCount: widget.messages.length,
+              itemBuilder: (context, index) {
+                final message = widget.messages[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: ChatBubble(
+                    text: message.text,
+                    isMe: message.isMe,
+                    isLoading: message.isLoading,
+                  ),
+                );
+              },
             ),
           ),
           if (_showCommands)
@@ -311,7 +526,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               child: IconButton(
                 icon: const Icon(Icons.add, color: Color(0xFF5F6368)),
-                onPressed: () {},
+                onPressed: _showOptionsBottomSheet,
               ),
             ),
             const SizedBox(width: 8),
@@ -336,6 +551,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   maxLines: null,
+                  onSubmitted: (_) => _handleSendPressed(),
                 ),
               ),
             ),
@@ -351,7 +567,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               child: IconButton(
                 icon: const Icon(Icons.arrow_upward, color: Colors.white),
-                onPressed: () {},
+                onPressed: _handleSendPressed,
               ),
             ),
           ],
@@ -364,7 +580,13 @@ class _ChatScreenState extends State<ChatScreen> {
 class ChatBubble extends StatelessWidget {
   final String text;
   final bool isMe;
-  const ChatBubble({super.key, required this.text, required this.isMe});
+  final bool isLoading;
+  const ChatBubble({
+    super.key,
+    required this.text,
+    required this.isMe,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -400,14 +622,37 @@ class ChatBubble extends StatelessWidget {
                 color: isMe ? const Color(0xFFE3F2FD) : const Color(0xFFF1F3F4),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: Text(
-                text,
-                style: TextStyle(
-                  color: const Color(0xFF202124),
-                  fontSize: 15,
-                  height: 1.4,
-                ),
-              ),
+              child: isLoading
+                  ? const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF5F6368),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Cargando...',
+                          style: TextStyle(
+                            color: Color(0xFF5F6368),
+                            fontSize: 15,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      text,
+                      style: const TextStyle(
+                        color: Color(0xFF202124),
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
             ),
           ),
           if (isMe) const SizedBox(width: 8),
@@ -418,7 +663,14 @@ class ChatBubble extends StatelessWidget {
 }
 
 class ClientsScreen extends StatelessWidget {
-  const ClientsScreen({super.key});
+  final List<Map<String, String>> clients;
+  final Function(String, String) onAddClient;
+
+  const ClientsScreen({
+    super.key,
+    required this.clients,
+    required this.onAddClient,
+  });
 
   Future<void> _openWhatsApp(String phone) async {
     final Uri whatsappUrl = Uri.parse(
@@ -431,14 +683,60 @@ class ClientsScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _showAddClientDialog(BuildContext context) async {
+    final nameController = TextEditingController();
+    final phoneController = TextEditingController();
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Añadir nuevo cliente'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  hintText: "Nombre del cliente",
+                ),
+                autofocus: true,
+              ),
+              TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  hintText: "Teléfono (ej: +52...)",
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Añadir'),
+              onPressed: () {
+                final name = nameController.text;
+                final phone = phoneController.text;
+                if (name.isNotEmpty && phone.isNotEmpty) {
+                  onAddClient(name, phone);
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> clients = [
-      {'name': 'Juan Pérez', 'phone': '+521234567890'},
-      {'name': 'Ana García', 'phone': '+529876543210'},
-      {'name': 'Carlos Rodríguez', 'phone': '+525555555555'},
-    ];
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -492,8 +790,8 @@ class ClientsScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Color(0xFF4A90E2).withOpacity(0.8),
-                      Color(0xFF7C4DFF).withOpacity(0.8),
+                      const Color(0xFF4A90E2).withOpacity(0.8),
+                      const Color(0xFF7C4DFF).withOpacity(0.8),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -546,7 +844,7 @@ class ClientsScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () => _showAddClientDialog(context),
         backgroundColor: const Color(0xFF4A90E2),
         elevation: 2,
         icon: const Icon(Icons.person_add),
@@ -561,6 +859,26 @@ class ClientsScreen extends StatelessWidget {
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
+  void _showPlaceholderDialog(BuildContext context, String title) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text('Aquí se administraría la sección de "$title".'),
+          actions: [
+            TextButton(
+              child: const Text('Cerrar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -582,55 +900,58 @@ class SettingsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           _buildSettingsSection(
+            context: context,
             title: 'Cuenta',
             items: [
               _buildSettingsItem(
                 icon: Icons.person_outline,
                 title: 'Perfil',
                 subtitle: 'Administra tu información personal',
-                onTap: () {},
+                onTap: () => _showPlaceholderDialog(context, 'Perfil'),
               ),
               _buildSettingsItem(
                 icon: Icons.notifications_outlined,
                 title: 'Notificaciones',
                 subtitle: 'Configura tus preferencias',
-                onTap: () {},
+                onTap: () => _showPlaceholderDialog(context, 'Notificaciones'),
               ),
             ],
           ),
           const SizedBox(height: 24),
           _buildSettingsSection(
+            context: context,
             title: 'Preferencias',
             items: [
               _buildSettingsItem(
                 icon: Icons.palette_outlined,
                 title: 'Tema',
                 subtitle: 'Claro',
-                onTap: () {},
+                onTap: () => _showPlaceholderDialog(context, 'Tema'),
               ),
               _buildSettingsItem(
                 icon: Icons.language_outlined,
                 title: 'Idioma',
                 subtitle: 'Español',
-                onTap: () {},
+                onTap: () => _showPlaceholderDialog(context, 'Idioma'),
               ),
             ],
           ),
           const SizedBox(height: 24),
           _buildSettingsSection(
+            context: context,
             title: 'Acerca de',
             items: [
               _buildSettingsItem(
                 icon: Icons.info_outline,
                 title: 'Versión',
                 subtitle: '1.0.0',
-                onTap: () {},
+                onTap: () => _showPlaceholderDialog(context, 'Versión'),
               ),
               _buildSettingsItem(
                 icon: Icons.help_outline,
                 title: 'Ayuda y soporte',
                 subtitle: 'Obtén ayuda con la app',
-                onTap: () {},
+                onTap: () => _showPlaceholderDialog(context, 'Ayuda y soporte'),
               ),
             ],
           ),
@@ -640,6 +961,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildSettingsSection({
+    required BuildContext context,
     required String title,
     required List<Widget> items,
   }) {
