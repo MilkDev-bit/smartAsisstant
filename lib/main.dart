@@ -1,84 +1,40 @@
-import 'dart:async';
-import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:app_links/app_links.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'core/api_service.dart';
-import 'features/auth/auth_service.dart';
-import 'features/chat/chat_service.dart';
-import 'features/clients/client_service.dart';
-import 'features/settings/settings_service.dart';
-import 'features/dashboard/dashboard_service.dart';
-import 'features/store/product_service.dart';
-import 'features/cart/cart_service.dart';
-import 'features/orders/order_service.dart';
-import 'features/admin/admin_service.dart';
-import 'features/auth/auth_wrapper.dart';
+import 'package:provider/provider.dart';
+import 'package:smartassistant_vendedor/screens/auth_wrapper.dart';
+import 'package:smartassistant_vendedor/providers/auth_provider.dart';
+import 'package:smartassistant_vendedor/providers/cotizacion_provider.dart';
+import 'package:smartassistant_vendedor/providers/task_provider.dart';
+import 'package:smartassistant_vendedor/providers/product_provider.dart';
+import 'package:smartassistant_vendedor/providers/user_provider.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-bool _initialUriIsHandled = false;
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('es_MX', null);
-
+void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => AuthService()),
-        ChangeNotifierProxyProvider<AuthService, ApiService>(
-          create: (context) =>
-              ApiService(Provider.of<AuthService>(context, listen: false)),
-          update: (_, auth, previousApiService) =>
-              previousApiService!..updateAuth(auth),
-        ),
-        ChangeNotifierProvider(create: (_) => CartService()),
-        ChangeNotifierProxyProvider<ApiService, DashboardService>(
-          create: (context) =>
-              DashboardService(Provider.of<ApiService>(context, listen: false)),
-          update: (_, api, previous) => previous ?? DashboardService(api),
-        ),
-        ChangeNotifierProxyProvider2<AuthService, ApiService, SettingsService>(
-          create: (context) => SettingsService(
-            Provider.of<AuthService>(context, listen: false),
-            Provider.of<ApiService>(context, listen: false),
+        ChangeNotifierProvider(create: (context) => AuthProvider()),
+        ChangeNotifierProvider(
+            create: (context) => ProductProvider(
+                Provider.of<AuthProvider>(context, listen: false))),
+        ChangeNotifierProxyProvider2<AuthProvider, ProductProvider,
+            CotizacionProvider>(
+          create: (context) => CotizacionProvider(
+            Provider.of<AuthProvider>(context, listen: false),
+            Provider.of<ProductProvider>(context, listen: false),
           ),
-          update: (_, auth, api, previous) =>
-              previous ?? SettingsService(auth, api),
+          update: (context, auth, product, previous) =>
+              CotizacionProvider(auth, product),
         ),
-        ChangeNotifierProxyProvider<ApiService, ProductService>(
+        ChangeNotifierProxyProvider<AuthProvider, TaskProvider>(
           create: (context) =>
-              ProductService(Provider.of<ApiService>(context, listen: false)),
-          update: (_, api, previous) => previous ?? ProductService(api),
+              TaskProvider(Provider.of<AuthProvider>(context, listen: false)),
+          update: (context, auth, previous) => TaskProvider(auth),
         ),
-        ChangeNotifierProxyProvider<ApiService, AdminService>(
+        ChangeNotifierProxyProvider<AuthProvider, UserProvider>(
           create: (context) =>
-              AdminService(Provider.of<ApiService>(context, listen: false)),
-          update: (_, api, previous) => previous ?? AdminService(api),
-        ),
-        ChangeNotifierProxyProvider2<AuthService, ApiService, ChatService>(
-          create: (context) => ChatService(
-            Provider.of<AuthService>(context, listen: false),
-            Provider.of<ApiService>(context, listen: false),
-          ),
-          update: (_, auth, api, previous) =>
-              previous ?? ChatService(auth, api),
-        ),
-        ChangeNotifierProxyProvider2<AuthService, ApiService, ClientService>(
-          create: (context) => ClientService(
-            Provider.of<AuthService>(context, listen: false),
-            Provider.of<ApiService>(context, listen: false),
-          ),
-          update: (_, auth, api, previous) =>
-              previous ?? ClientService(auth, api),
-        ),
-        ChangeNotifierProxyProvider2<AuthService, ApiService, OrderService>(
-          create: (context) => OrderService(
-            Provider.of<AuthService>(context, listen: false),
-            Provider.of<ApiService>(context, listen: false),
-          ),
-          update: (_, auth, api, previous) =>
-              previous ?? OrderService(auth, api),
+              UserProvider(Provider.of<AuthProvider>(context, listen: false)),
+          update: (context, auth, previous) => UserProvider(auth),
         ),
       ],
       child: const MyApp(),
@@ -86,80 +42,59 @@ void main() async {
   );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  late AppLinks _appLinks;
-  StreamSubscription<Uri>? _linkSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    initDeepLinks();
-  }
-
-  @override
-  void dispose() {
-    _linkSubscription?.cancel();
-    super.dispose();
-  }
-
-  Future<void> initDeepLinks() async {
-    _appLinks = AppLinks();
-    if (!_initialUriIsHandled) {
-      _initialUriIsHandled = true;
-      try {
-        final Uri? initialUri = await _appLinks.getInitialLink();
-        if (initialUri != null && mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _processUri(initialUri);
-          });
-        }
-      } catch (e) {
-        debugPrint('Error obteniendo URI inicial: $e');
-      }
-    }
-    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-      if (mounted) _processUri(uri);
-    }, onError: (err) {
-      if (mounted) debugPrint('Error en stream de links: $err');
-    });
-  }
-
-  void _processUri(Uri uri) {
-    if (uri.scheme == 'smartassistant' && uri.host == 'login-success') {
-      final token = uri.queryParameters['token'];
-      if (token != null && token.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final context = navigatorKey.currentContext;
-          if (context != null) {
-            final authService =
-                Provider.of<AuthService>(context, listen: false);
-            final apiService = Provider.of<ApiService>(context, listen: false);
-
-            authService.handleTokenFromDeepLink(apiService, token);
-          }
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'SmartAssistant CRM - Vendedores',
       navigatorKey: navigatorKey,
-      title: 'SmartAssistant',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        useMaterial3: true,
+        scaffoldBackgroundColor: Colors.grey[50],
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          elevation: 1,
+          foregroundColor: Colors.black87,
+          titleTextStyle: TextStyle(
+            color: Colors.black87,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+          iconTheme: IconThemeData(color: Colors.black87),
+        ),
+        cardTheme: CardThemeData(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
-      debugShowCheckedModeBanner: false,
       home: const AuthWrapper(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

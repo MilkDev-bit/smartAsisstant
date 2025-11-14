@@ -1,18 +1,46 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smartassistant/main.dart';
+import 'package:provider/provider.dart';
+import 'package:smartassistant_vendedor/main.dart';
+import 'package:smartassistant_vendedor/providers/auth_provider.dart';
+import 'package:smartassistant_vendedor/providers/cotizacion_provider.dart';
+import 'package:smartassistant_vendedor/providers/product_provider.dart';
+import 'package:smartassistant_vendedor/providers/task_provider.dart';
+import 'package:smartassistant_vendedor/screens/login_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Smoke test: La app debe arrancar y mostrar la LoginScreen',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (context) => AuthProvider()),
+          ChangeNotifierProxyProvider<AuthProvider, CotizacionProvider>(
+            create: (context) => CotizacionProvider(
+              Provider.of<AuthProvider>(context, listen: false),
+            ),
+            update: (context, auth, previous) => CotizacionProvider(auth),
+          ),
+          ChangeNotifierProxyProvider<AuthProvider, TaskProvider>(
+            create: (context) => TaskProvider(
+              Provider.of<AuthProvider>(context, listen: false),
+            ),
+            update: (context, auth, previous) => TaskProvider(auth),
+          ),
+          ChangeNotifierProxyProvider<AuthProvider, ProductProvider>(
+            create: (context) => ProductProvider(
+              Provider.of<AuthProvider>(context, listen: false),
+            ),
+            update: (context, auth, previous) => ProductProvider(auth),
+          ),
+        ],
+        child: const MyApp(),
+      ),
+    );
 
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(find.byType(LoginScreen), findsOneWidget);
 
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Cotizaciones Pendientes'), findsNothing);
   });
 }

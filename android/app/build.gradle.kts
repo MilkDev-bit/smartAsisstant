@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -28,6 +27,11 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        manifestPlaceholders += mapOf(
+            "onesignal_app_id" to "6be7a393-fe66-4d7f-b626-56cf19b6b500",
+            "onesignal_google_project_number" to "REMOTE"
+        )
     }
 
     buildTypes {
