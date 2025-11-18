@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smartassistant_vendedor/screens/cotizaciones_tab.dart';
 import 'package:smartassistant_vendedor/screens/tasks_tab.dart';
 import 'package:smartassistant_vendedor/screens/all_products_screen.dart';
-import 'package:provider/provider.dart';
+import 'package:smartassistant_vendedor/screens/compras_pendientes_screen.dart';
 import 'package:smartassistant_vendedor/providers/auth_provider.dart';
+import 'package:smartassistant_vendedor/providers/compra_provider.dart';
 import 'package:smartassistant_vendedor/widgets/vin_scanner_button.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,16 +18,15 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    CotizacionesTab(),
-    TasksTab(),
-    ProfileTab(),
+  final List<Widget> _widgetOptions = <Widget>[
+    const CotizacionesTab(),
+    const ComprasPendientesScreen(),
+    const TasksTab(),
+    const ProfileTab(),
   ];
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
   }
 
   String _getAppBarTitle(int index) {
@@ -33,8 +34,10 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return 'Cotizaciones Pendientes';
       case 1:
-        return 'Mis Tareas';
+        return 'Compras Pendientes';
       case 2:
+        return 'Mis Tareas';
+      case 3:
         return 'Mi Perfil';
       default:
         return 'SmartAssistant CRM';
@@ -60,14 +63,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const AllProductsScreen(),
-                      ),
+                          builder: (context) => const AllProductsScreen()),
                     );
                   },
                   tooltip: 'Ver Catálogo de Vehículos',
                 )
               ]
-            : null,
+            : _selectedIndex == 1
+                ? [
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        Provider.of<CompraProvider>(context, listen: false)
+                            .fetchComprasPendientes();
+                      },
+                      tooltip: 'Actualizar Compras',
+                    ),
+                  ]
+                : null,
       ),
       body: IndexedStack(
         index: _selectedIndex,
@@ -85,6 +98,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.request_quote_outlined),
             activeIcon: Icon(Icons.request_quote),
             label: 'Cotizaciones',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart_outlined),
+            activeIcon: Icon(Icons.shopping_cart),
+            label: 'Compras',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.task_alt_outlined),

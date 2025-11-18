@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:smartassistant_vendedor/screens/auth_wrapper.dart';
 import 'package:smartassistant_vendedor/providers/auth_provider.dart';
+import 'package:smartassistant_vendedor/providers/product_provider.dart';
 import 'package:smartassistant_vendedor/providers/cotizacion_provider.dart';
 import 'package:smartassistant_vendedor/providers/task_provider.dart';
-import 'package:smartassistant_vendedor/providers/product_provider.dart';
 import 'package:smartassistant_vendedor/providers/user_provider.dart';
+import 'package:smartassistant_vendedor/providers/compra_provider.dart';
+import 'package:smartassistant_vendedor/screens/auth_wrapper.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -13,10 +14,14 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(
-            create: (context) => ProductProvider(
-                Provider.of<AuthProvider>(context, listen: false))),
+          create: (context) => AuthProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ProductProvider(
+            Provider.of<AuthProvider>(context, listen: false),
+          ),
+        ),
         ChangeNotifierProxyProvider2<AuthProvider, ProductProvider,
             CotizacionProvider>(
           create: (context) => CotizacionProvider(
@@ -26,14 +31,23 @@ void main() {
           update: (context, auth, product, previous) =>
               CotizacionProvider(auth, product),
         ),
+        ChangeNotifierProxyProvider2<AuthProvider, CotizacionProvider,
+            CompraProvider>(
+          create: (context) => CompraProvider(
+            Provider.of<AuthProvider>(context, listen: false),
+          ),
+          update: (context, auth, cotizacion, previous) => CompraProvider(auth),
+        ),
         ChangeNotifierProxyProvider<AuthProvider, TaskProvider>(
-          create: (context) =>
-              TaskProvider(Provider.of<AuthProvider>(context, listen: false)),
+          create: (context) => TaskProvider(
+            Provider.of<AuthProvider>(context, listen: false),
+          ),
           update: (context, auth, previous) => TaskProvider(auth),
         ),
         ChangeNotifierProxyProvider<AuthProvider, UserProvider>(
-          create: (context) =>
-              UserProvider(Provider.of<AuthProvider>(context, listen: false)),
+          create: (context) => UserProvider(
+            Provider.of<AuthProvider>(context, listen: false),
+          ),
           update: (context, auth, previous) => UserProvider(auth),
         ),
       ],
