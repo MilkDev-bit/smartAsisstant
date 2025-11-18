@@ -74,244 +74,376 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Crear Cuenta'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _navigateToLogin,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF1A1F2E),
+              Color(0xFF2D3748),
+            ],
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 20),
-                Column(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
                   children: [
                     Container(
-                      width: 80,
-                      height: 80,
                       decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: _navigateToLogin,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Text(
+                      'Crear Cuenta',
+                      style: TextStyle(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.asset(
-                          'assets/images/autobots_logo.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              Icons.person_add_alt_1,
-                              size: 40,
-                              color: Theme.of(context).primaryColor,
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Registro de Vendedor',
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'AUTOBOTS CRM',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).primaryColor,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Crea tu cuenta para acceder al panel',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[600],
-                          ),
-                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
-                TextFormField(
-                  controller: _nombreController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre Completo *',
-                    prefixIcon: Icon(Icons.person_outline),
-                    border: OutlineInputBorder(),
-                  ),
-                  textCapitalization: TextCapitalization.words,
-                  validator: (val) =>
-                      val!.isEmpty ? 'Por favor ingrese su nombre' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email *',
-                    prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (val) {
-                    if (val == null || val.isEmpty) {
-                      return 'Por favor ingrese su email';
-                    }
-                    if (!val.contains('@')) {
-                      return 'Ingrese un email válido';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _telefonoController,
-                  decoration: const InputDecoration(
-                    labelText: 'Teléfono (Opcional)',
-                    prefixIcon: Icon(Icons.phone_outlined),
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña *',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    border: const OutlineInputBorder(),
-                  ),
-                  obscureText: _obscurePassword,
-                  validator: _validatePassword,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  decoration: InputDecoration(
-                    labelText: 'Confirmar Contraseña *',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
-                    ),
-                    border: const OutlineInputBorder(),
-                  ),
-                  obscureText: _obscureConfirmPassword,
-                  validator: _validatePassword,
-                ),
-                const SizedBox(height: 24),
-                authProvider.authStatus == AuthStatus.authenticating
-                    ? const Center(child: CircularProgressIndicator())
-                    : ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50),
-                          backgroundColor: Theme.of(context).primaryColor,
-                        ),
-                        onPressed: () => _register(context),
-                        child: const Text(
-                          'Registrarse',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: Colors.blue[700],
-                            size: 16,
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(context)
+                                  .primaryColor
+                                  .withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: Image.asset(
+                            'assets/images/autobots_logo.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.person_add_alt_1,
+                                size: 50,
+                                color: Theme.of(context).primaryColor,
+                              );
+                            },
                           ),
-                          const SizedBox(width: 8),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ShaderMask(
+                        shaderCallback: (bounds) => LinearGradient(
+                          colors: [Colors.white, Colors.blue.shade200],
+                        ).createShader(bounds),
+                        child: const Text(
+                          'Registro de Vendedor',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Theme.of(context).primaryColor.withOpacity(0.3),
+                              Theme.of(context).primaryColor.withOpacity(0.1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'AUTOBOTS CRM',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.95),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 30,
+                              offset: const Offset(0, 15),
+                            ),
+                          ],
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              _buildTextField(
+                                controller: _nombreController,
+                                label: 'Nombre Completo',
+                                icon: Icons.person_outline,
+                                validator: (val) => val!.isEmpty
+                                    ? 'Por favor ingrese su nombre'
+                                    : null,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: _emailController,
+                                label: 'Email',
+                                icon: Icons.email_outlined,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: (val) {
+                                  if (val == null || val.isEmpty) {
+                                    return 'Por favor ingrese su email';
+                                  }
+                                  if (!val.contains('@')) {
+                                    return 'Ingrese un email válido';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: _telefonoController,
+                                label: 'Teléfono (Opcional)',
+                                icon: Icons.phone_outlined,
+                                keyboardType: TextInputType.phone,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: _passwordController,
+                                label: 'Contraseña',
+                                icon: Icons.lock_outline,
+                                obscureText: _obscurePassword,
+                                validator: _validatePassword,
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: _confirmPasswordController,
+                                label: 'Confirmar Contraseña',
+                                icon: Icons.lock_outline,
+                                obscureText: _obscureConfirmPassword,
+                                validator: _validatePassword,
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureConfirmPassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureConfirmPassword =
+                                          !_obscureConfirmPassword;
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              authProvider.authStatus ==
+                                      AuthStatus.authenticating
+                                  ? const CircularProgressIndicator()
+                                  : Container(
+                                      width: double.infinity,
+                                      height: 54,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Theme.of(context).primaryColor,
+                                            Theme.of(context)
+                                                .primaryColor
+                                                .withBlue(255),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Theme.of(context)
+                                                .primaryColor
+                                                .withOpacity(0.4),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 6),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.transparent,
+                                          shadowColor: Colors.transparent,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                        onPressed: () => _register(context),
+                                        child: const Text(
+                                          'Registrarse',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                              const SizedBox(height: 16),
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border:
+                                      Border.all(color: Colors.blue.shade200),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(Icons.info_outline,
+                                            color: Colors.blue.shade700,
+                                            size: 20),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Información importante',
+                                          style: TextStyle(
+                                            color: Colors.blue.shade700,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '• Tu cuenta será verificada por un administrador\n'
+                                      '• Solo personal autorizado puede registrarse\n'
+                                      '• Usa una contraseña segura de al menos 6 caracteres',
+                                      style: TextStyle(
+                                        color: Colors.blue.shade700,
+                                        fontSize: 12,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           Text(
-                            'Información importante',
+                            '¿Ya tienes cuenta? ',
                             style: TextStyle(
-                              color: Colors.blue[700],
-                              fontWeight: FontWeight.bold,
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 14,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _navigateToLogin,
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text(
+                              'Inicia Sesión',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '• Tu cuenta será verificada por un administrador\n'
-                        '• Solo personal autorizado puede registrarse\n'
-                        '• Usa una contraseña segura de al menos 6 caracteres',
-                        style: TextStyle(
-                          color: Colors.blue[700],
-                          fontSize: 12,
-                        ),
-                      ),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                const Divider(),
-                const SizedBox(height: 16),
-                const Text(
-                  '¿Ya tienes una cuenta?',
-                  style: TextStyle(color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton(
-                  onPressed: _navigateToLogin,
-                  child: const Text('Iniciar Sesión'),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    Widget? suffixIcon,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      style: const TextStyle(fontSize: 15),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: Theme.of(context).primaryColor),
+        suffixIcon: suffixIcon,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              BorderSide(color: Theme.of(context).primaryColor, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+      ),
+      validator: validator,
     );
   }
 

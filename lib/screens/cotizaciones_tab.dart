@@ -35,96 +35,198 @@ class _CotizacionesTabState extends State<CotizacionesTab> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.request_quote_outlined,
-            size: 80,
-            color: Colors.grey[300],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No hay cotizaciones pendientes',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[500],
-              fontWeight: FontWeight.w500,
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.request_quote_outlined,
+                size: 60,
+                color: Colors.grey.shade400,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Las nuevas cotizaciones de clientes\naparecerán aquí automáticamente',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 14,
+            const SizedBox(height: 24),
+            const Text(
+              'No hay cotizaciones pendientes',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _refreshCotizaciones,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Actualizar'),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              'Las nuevas cotizaciones de clientes\naparecerán aquí automáticamente',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).primaryColor,
+                    Theme.of(context).primaryColor.withBlue(255),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).primaryColor.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: _refreshCotizaciones,
+                icon: const Icon(Icons.refresh),
+                label: const Text(
+                  'Actualizar',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildErrorState(String error) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: Colors.red[300],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Error al cargar cotizaciones',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline,
+                size: 50,
+                color: Colors.red.shade400,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Text(
+            const SizedBox(height: 24),
+            const Text(
+              'Error al cargar cotizaciones',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
               error,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 14,
+                color: Colors.grey[600],
+                fontSize: 15,
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _refreshCotizaciones,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Reintentar'),
-          ),
-        ],
+            const SizedBox(height: 32),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).primaryColor,
+                    Theme.of(context).primaryColor.withBlue(255),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).primaryColor.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: _refreshCotizaciones,
+                icon: const Icon(Icons.refresh),
+                label: const Text(
+                  'Reintentar',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildLoadingState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Theme.of(context).primaryColor,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
           Text(
             'Cargando cotizaciones...',
             style: TextStyle(
-              color: Colors.grey,
+              color: Colors.grey[600],
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -135,181 +237,241 @@ class _CotizacionesTabState extends State<CotizacionesTab> {
   Widget _buildCotizacionCard(BuildContext context, Cotizacion cotizacion) {
     final currencyFormatter =
         NumberFormat.currency(locale: 'es_MX', symbol: '\$');
-    final theme = Theme.of(context);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
-      child: InkWell(
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) =>
-                  CotizacionDetailScreen(cotizacion: cotizacion),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      cotizacion.coche.nombreCompleto,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(cotizacion.status),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      cotizacion.status,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) =>
+                    CotizacionDetailScreen(cotizacion: cotizacion),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.person_outline,
-                    size: 16,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      cotizacion.cliente.nombre,
-                      style: TextStyle(
-                        color: Colors.grey[700],
-                        fontSize: 14,
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(18.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            cotizacion.coche.nombreCompleto,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Color(0xFF1A1F2E),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'VIN: ${cotizacion.coche.vin}',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(
-                    Icons.email_outlined,
-                    size: 16,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      cotizacion.cliente.email,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 13,
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            _getStatusColor(cotizacion.status),
+                            _getStatusColor(cotizacion.status).withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _getStatusColor(cotizacion.status)
+                                .withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Enganche',
-                        style: TextStyle(
-                          color: Colors.grey[600],
+                      child: Text(
+                        cotizacion.status,
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        currencyFormatter.format(cotizacion.enganche),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.person_outline,
+                          size: 20,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              cotizacion.cliente.nombre,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              cotizacion.cliente.email,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoPill(
+                        'Enganche',
+                        currencyFormatter.format(cotizacion.enganche),
+                        Colors.blue.shade600,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildInfoPill(
+                        'Plazo',
+                        '${cotizacion.plazoMeses} meses',
+                        Colors.purple.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.green.shade50,
+                        Colors.green.shade100,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Pago Mensual',
                         style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
+                          color: Colors.green.shade700,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
                         currencyFormatter.format(cotizacion.pagoMensual),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Plazo',
                         style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        '${cotizacion.plazoMeses} meses',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.green.shade700,
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.confirmation_number_outlined,
-                    size: 14,
-                    color: Colors.grey[500],
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'VIN: ${cotizacion.coche.vin}',
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoPill(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -363,6 +525,7 @@ class _CotizacionesTabState extends State<CotizacionesTab> {
               return RefreshIndicator(
                 onRefresh: _refreshCotizaciones,
                 child: ListView.builder(
+                  padding: const EdgeInsets.only(top: 20, bottom: 20),
                   itemCount: provider.cotizaciones.length,
                   itemBuilder: (context, index) => _buildCotizacionCard(
                       context, provider.cotizaciones[index]),

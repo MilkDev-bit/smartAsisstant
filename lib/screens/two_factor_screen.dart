@@ -98,155 +98,315 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Verificación en Dos Pasos'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Provider.of<AuthProvider>(context, listen: false).logout();
-          },
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF1A1F2E),
+              Color(0xFF2D3748),
+            ],
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+        child: SafeArea(
           child: Column(
             children: [
-              const SizedBox(height: 40),
-              Icon(
-                Icons.security,
-                size: 80,
-                color: Theme.of(context).primaryColor,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Verificación de Seguridad',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Hemos enviado un código de 6 dígitos a tu correo electrónico. '
-                'Ingrésalo a continuación para continuar.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 40),
-              Form(
-                key: _formKey,
+              Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(6, (index) {
-                    return SizedBox(
-                      width: 50,
-                      child: TextFormField(
-                        controller: _codeControllers[index],
-                        focusNode: _focusNodes[index],
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        maxLength: 1,
-                        decoration: InputDecoration(
-                          counterText: '',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          contentPadding: const EdgeInsets.all(12),
-                        ),
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        onChanged: (value) => _onCodeChanged(index, value),
-                        onTap: () {
-                          _codeControllers[index].selection =
-                              TextSelection.collapsed(
-                                  offset: _codeControllers[index].text.length);
-                        },
-                        buildCounter: (context,
-                            {required currentLength,
-                            required isFocused,
-                            maxLength}) {
-                          return null;
-                        },
-                      ),
-                    );
-                  }),
-                ),
-              ),
-              const SizedBox(height: 24),
-              authProvider.authStatus == AuthStatus.authenticating
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        backgroundColor: Theme.of(context).primaryColor,
-                      ),
-                      onPressed: _verifyCode,
-                      child: const Text(
-                        'Verificar Código',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  // En una implementación real, esto llamaría al backend
-                  // para reenviar el código 2FA
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Código reenviado a tu correo'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  _clearCodeFields();
-                },
-                child: const Text('No recibí el código, reenviar'),
-              ),
-              const SizedBox(height: 32),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: Colors.blue[700],
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Seguridad',
-                          style: TextStyle(
-                            color: Colors.blue[700],
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () {
+                          Provider.of<AuthProvider>(context, listen: false)
+                              .logout();
+                        },
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '• El código expira en 10 minutos\n'
-                      '• Solo se permiten intentos limitados\n'
-                      '• Contacta al administrador si tienes problemas',
+                    const SizedBox(width: 16),
+                    const Text(
+                      'Verificación 2FA',
                       style: TextStyle(
-                        color: Colors.blue[700],
-                        fontSize: 14,
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(context)
+                                  .primaryColor
+                                  .withOpacity(0.3),
+                              blurRadius: 30,
+                              spreadRadius: 5,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.security,
+                          size: 60,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      ShaderMask(
+                        shaderCallback: (bounds) => LinearGradient(
+                          colors: [Colors.white, Colors.blue.shade200],
+                        ).createShader(bounds),
+                        child: const Text(
+                          'Verificación de Seguridad',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Hemos enviado un código de 6 dígitos\na tu correo electrónico',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.95),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 30,
+                              offset: const Offset(0, 15),
+                            ),
+                          ],
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              const Text(
+                                'Ingresa el código',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: List.generate(6, (index) {
+                                  return Container(
+                                    width: 50,
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 5,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextFormField(
+                                      controller: _codeControllers[index],
+                                      focusNode: _focusNodes[index],
+                                      textAlign: TextAlign.center,
+                                      keyboardType: TextInputType.number,
+                                      maxLength: 1,
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      decoration: InputDecoration(
+                                        counterText: '',
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey.shade300),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey.shade300),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey.shade50,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                vertical: 16),
+                                      ),
+                                      onChanged: (value) =>
+                                          _onCodeChanged(index, value),
+                                      onTap: () {
+                                        _codeControllers[index].selection =
+                                            TextSelection.collapsed(
+                                                offset: _codeControllers[index]
+                                                    .text
+                                                    .length);
+                                      },
+                                    ),
+                                  );
+                                }),
+                              ),
+                              const SizedBox(height: 32),
+                              authProvider.authStatus ==
+                                      AuthStatus.authenticating
+                                  ? const CircularProgressIndicator()
+                                  : Container(
+                                      width: double.infinity,
+                                      height: 54,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Theme.of(context).primaryColor,
+                                            Theme.of(context)
+                                                .primaryColor
+                                                .withBlue(255),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Theme.of(context)
+                                                .primaryColor
+                                                .withOpacity(0.4),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 6),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.transparent,
+                                          shadowColor: Colors.transparent,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                        onPressed: _verifyCode,
+                                        child: const Text(
+                                          'Verificar Código',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                              const SizedBox(height: 16),
+                              TextButton(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text('Código reenviado a tu correo'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  _clearCodeFields();
+                                },
+                                child: Text(
+                                  'No recibí el código, reenviar',
+                                  style: TextStyle(
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Información de seguridad',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              '• El código expira en 10 minutos\n'
+                              '• Solo se permiten intentos limitados\n'
+                              '• Contacta al administrador si tienes problemas',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 13,
+                                height: 1.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

@@ -23,6 +23,8 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
     final bool confirm = await showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Text('Evaluar Financiamiento'),
             content: const Text(
               '¿Estás seguro de que quieres evaluar el financiamiento de esta compra?\n\n'
@@ -30,11 +32,13 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
             ),
             actions: [
               TextButton(
-                child: const Text('Cancelar'),
+                child:
+                    Text('Cancelar', style: TextStyle(color: Colors.grey[600])),
                 onPressed: () => navigator.pop(false),
               ),
               TextButton(
-                child: const Text('Evaluar'),
+                child: const Text('Evaluar',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 onPressed: () => navigator.pop(true),
               ),
             ],
@@ -52,9 +56,12 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
 
     if (success && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Financiamiento evaluado exitosamente'),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: const Text('Financiamiento evaluado exitosamente'),
+          backgroundColor: Colors.green.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
 
@@ -70,7 +77,10 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${provider.error}'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
@@ -89,6 +99,8 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
     final bool confirm = await showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text('$status Compra'),
             content: Text(
               '¿Estás seguro de que quieres $status esta compra?\n\n'
@@ -96,11 +108,13 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
             ),
             actions: [
               TextButton(
-                child: const Text('Cancelar'),
+                child:
+                    Text('Cancelar', style: TextStyle(color: Colors.grey[600])),
                 onPressed: () => navigator.pop(false),
               ),
               TextButton(
-                child: Text(status),
+                child: Text(status,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
                 onPressed: () => navigator.pop(true),
               ),
             ],
@@ -121,7 +135,10 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Compra ${status.toLowerCase()} exitosamente'),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.green.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
       navigator.pop();
@@ -129,7 +146,10 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${provider.error}'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
@@ -142,9 +162,21 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
   }
 
   Widget _buildInfoCard(String title, List<Widget> children) {
-    return Card(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -153,9 +185,10 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1F2E),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             ...children,
           ],
         ),
@@ -165,22 +198,33 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
 
   Widget _buildDetailRow(String label, String value, {bool isBold = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.black54,
-              fontWeight: isBold ? FontWeight.w500 : FontWeight.normal,
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+                fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              fontSize: isBold ? 16 : 14,
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+                fontSize: isBold ? 16 : 14,
+                color: isBold ? const Color(0xFF1A1F2E) : Colors.black87,
+              ),
             ),
           ),
         ],
@@ -193,14 +237,64 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildDetailRow('Score Crediticio', '${buro['score']}'),
-        _buildDetailRow('Nivel de Riesgo', buro['nivelRiesgo'] ?? 'N/A'),
-        if (buro['detalles'] != null) ...[
-          const SizedBox(height: 8),
-          const Text(
-            'Detalles del Buró:',
-            style: TextStyle(fontWeight: FontWeight.bold),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.blue.shade50,
+                Colors.blue.shade100,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.blue.shade200),
           ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Score Crediticio',
+                    style: TextStyle(
+                      color: Colors.blue.shade700,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${buro['score']}',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  buro['nivelRiesgo'] ?? 'N/A',
+                  style: TextStyle(
+                    color: Colors.blue.shade700,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (buro['detalles'] != null) ...[
+          const SizedBox(height: 16),
           _buildDetailRow('Historial de Pagos',
               buro['detalles']['historialPagos']['pagosATiempo'] ?? 'N/A'),
           _buildDetailRow('Cuentas Abiertas',
@@ -218,9 +312,28 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
         NumberFormat.currency(locale: 'es_MX', symbol: '\$');
 
     if (banco == null) {
-      return const Text(
-        'Financiamiento pendiente de evaluación',
-        style: TextStyle(color: Colors.orange),
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.orange.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.pending, color: Colors.orange.shade700),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Financiamiento pendiente de evaluación',
+                style: TextStyle(
+                  color: Colors.orange.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -228,13 +341,42 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailRow('Estado', 'APROBADO', isBold: true),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.green.shade50,
+                  Colors.green.shade100,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle,
+                    color: Colors.green.shade700, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  'APROBADO',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           _buildDetailRow('Monto Aprobado',
               currencyFormatter.format(banco['montoAprobado'])),
           _buildDetailRow('Tasa de Interés',
               '${((banco['tasaInteres'] ?? 0) * 100).toStringAsFixed(1)}%'),
           _buildDetailRow(
-              'Pago Mensual', currencyFormatter.format(banco['pagoMensual'])),
+              'Pago Mensual', currencyFormatter.format(banco['pagoMensual']),
+              isBold: true),
           _buildDetailRow('Plazo Aprobado', '${banco['plazoAprobado']} meses'),
         ],
       );
@@ -242,19 +384,65 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailRow('Estado', 'RECHAZADO', isBold: true),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.red.shade50,
+                  Colors.red.shade100,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.cancel, color: Colors.red.shade700, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  'RECHAZADO',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           _buildDetailRow(
               'Motivo', banco['motivoRechazo'] ?? 'No especificado'),
           if (banco['sugerencias'] != null) ...[
-            const SizedBox(height: 8),
-            const Text(
+            const SizedBox(height: 12),
+            Text(
               'Sugerencias:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[700],
+                fontSize: 14,
+              ),
             ),
-            ...(banco['sugerencias'] as List)
-                .map((sug) =>
-                    Text('• $sug', style: const TextStyle(fontSize: 12)))
-                .toList(),
+            const SizedBox(height: 8),
+            ...((banco['sugerencias'] as List).map((sug) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('• ', style: TextStyle(color: Colors.grey[600])),
+                      Expanded(
+                        child: Text(
+                          sug,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ))),
           ],
         ],
       );
@@ -265,183 +453,399 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
   Widget build(BuildContext context) {
     final currencyFormatter =
         NumberFormat.currency(locale: 'es_MX', symbol: '\$');
-    final theme = Theme.of(context);
 
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _getStatusColor(widget.compra.status).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _getStatusColor(widget.compra.status).withOpacity(0.3),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF1A1F2E),
+              Color(0xFF2D3748),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Text(
+                        'Detalle de Compra',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    _getStatusIcon(widget.compra.status),
-                    color: _getStatusColor(widget.compra.status),
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF5F7FA),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Estado: ${widget.compra.status}',
-                          style: TextStyle(
-                            color: _getStatusColor(widget.compra.status),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                _getStatusColor(widget.compra.status)
+                                    .withOpacity(0.15),
+                                _getStatusColor(widget.compra.status)
+                                    .withOpacity(0.05),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _getStatusColor(widget.compra.status)
+                                  .withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  _getStatusIcon(widget.compra.status),
+                                  color: _getStatusColor(widget.compra.status),
+                                  size: 26,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.compra.status,
+                                      style: TextStyle(
+                                        color: _getStatusColor(
+                                            widget.compra.status),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _getStatusDescription(
+                                          widget.compra.status),
+                                      style: TextStyle(
+                                        color: _getStatusColor(
+                                            widget.compra.status),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Text(
-                          _getStatusDescription(widget.compra.status),
-                          style: TextStyle(
-                            color: _getStatusColor(widget.compra.status),
-                            fontSize: 14,
+                        const SizedBox(height: 24),
+                        _buildInfoCard('Información del Cliente', [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: Theme.of(context)
+                                      .primaryColor
+                                      .withOpacity(0.1),
+                                  child: Icon(
+                                    Icons.person,
+                                    color: Theme.of(context).primaryColor,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.compra.cliente.nombre,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        widget.compra.cliente.email,
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                          if (widget.compra.cliente.telefono != null &&
+                              widget.compra.cliente.telefono!.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.phone,
+                                      color: Colors.grey[600], size: 20),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    widget.compra.cliente.telefono!,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 16),
+                          ContactButtons(
+                            telefono: widget.compra.cliente.telefono,
+                            email: widget.compra.cliente.email,
+                          ),
+                        ]),
+                        _buildInfoCard('Vehículo', [
+                          Text(
+                            widget.compra.cotizacion.coche.nombreCompleto,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A1F2E),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildDetailRow(
+                              'VIN', widget.compra.cotizacion.coche.vin),
+                          const Divider(height: 24),
+                          _buildDetailRow(
+                              'Precio',
+                              currencyFormatter.format(
+                                  widget.compra.cotizacion.precioCoche)),
+                          _buildDetailRow(
+                              'Enganche',
+                              currencyFormatter
+                                  .format(widget.compra.cotizacion.enganche)),
+                        ]),
+                        _buildInfoCard('Información Financiera del Cliente', [
+                          _buildDetailRow(
+                              'Ingreso Mensual',
+                              currencyFormatter.format(widget
+                                  .compra.datosFinancieros['ingresoMensual'])),
+                          _buildDetailRow(
+                              'Otros Ingresos',
+                              currencyFormatter.format(widget
+                                  .compra.datosFinancieros['otrosIngresos'])),
+                          _buildDetailRow(
+                              'Gastos Mensuales',
+                              currencyFormatter.format(widget
+                                  .compra.datosFinancieros['gastosMensuales'])),
+                          _buildDetailRow(
+                              'Deudas Actuales',
+                              currencyFormatter.format(widget
+                                  .compra.datosFinancieros['deudasActuales'])),
+                          const Divider(height: 24),
+                          _buildDetailRow(
+                              'Capacidad de Pago',
+                              currencyFormatter.format(widget
+                                  .compra.datosFinancieros['capacidadPago']),
+                              isBold: true),
+                        ]),
+                        _buildInfoCard('Buró de Crédito', [
+                          _buildBuroInfo(),
+                        ]),
+                        _buildInfoCard('Evaluación Bancaria', [
+                          _buildBancoInfo(),
+                        ]),
+                        if (widget.compra.estaEnRevision ||
+                            (widget.compra.estaAprobada &&
+                                widget.compra.financiamientoAprobado)) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Acciones',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A1F2E),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          if (widget.compra.estaEnRevision)
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.blue.shade400,
+                                    Colors.blue.shade600,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.blue.withOpacity(0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  minimumSize: const Size(double.infinity, 56),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                onPressed: _isProcessing
+                                    ? null
+                                    : _evaluarFinanciamiento,
+                                child: _isProcessing
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Evaluar Financiamiento',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          if (widget.compra.estaAprobada &&
+                              widget.compra.financiamientoAprobado) ...[
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.green.shade400,
+                                    Colors.green.shade600,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.green.withOpacity(0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  minimumSize: const Size(double.infinity, 56),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                onPressed: _isProcessing
+                                    ? null
+                                    : () => _aprobarCompra('Completada'),
+                                child: _isProcessing
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Marcar como Completada',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 56),
+                                side: BorderSide(
+                                    color: Colors.red.shade400, width: 2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              onPressed: _isProcessing
+                                  ? null
+                                  : () => _aprobarCompra('Rechazada'),
+                              child: Text(
+                                'Rechazar Compra',
+                                style: TextStyle(
+                                  color: Colors.red.shade600,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+                        ],
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildInfoCard('Información del Cliente', [
-              ListTile(
-                leading: const Icon(Icons.person_outline),
-                title: Text(widget.compra.cliente.nombre),
-                subtitle: Text(widget.compra.cliente.email),
-              ),
-              if (widget.compra.cliente.telefono != null &&
-                  widget.compra.cliente.telefono!.isNotEmpty)
-                ListTile(
-                  leading: const Icon(Icons.phone_outlined),
-                  title: Text(widget.compra.cliente.telefono!),
-                ),
-              const SizedBox(height: 8),
-              ContactButtons(
-                telefono: widget.compra.cliente.telefono,
-                email: widget.compra.cliente.email,
-              ),
-            ]),
-            const SizedBox(height: 20),
-            _buildInfoCard('Vehículo', [
-              Text(
-                widget.compra.cotizacion.coche.nombreCompleto,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
-              _buildDetailRow('VIN:', widget.compra.cotizacion.coche.vin),
-              _buildDetailRow(
-                  'Precio:',
-                  currencyFormatter
-                      .format(widget.compra.cotizacion.precioCoche)),
-              _buildDetailRow('Enganche:',
-                  currencyFormatter.format(widget.compra.cotizacion.enganche)),
-            ]),
-            const SizedBox(height: 20),
-            _buildInfoCard('Información Financiera del Cliente', [
-              _buildDetailRow(
-                  'Ingreso Mensual',
-                  currencyFormatter.format(
-                      widget.compra.datosFinancieros['ingresoMensual'])),
-              _buildDetailRow(
-                  'Otros Ingresos',
-                  currencyFormatter
-                      .format(widget.compra.datosFinancieros['otrosIngresos'])),
-              _buildDetailRow(
-                  'Gastos Mensuales',
-                  currencyFormatter.format(
-                      widget.compra.datosFinancieros['gastosMensuales'])),
-              _buildDetailRow(
-                  'Deudas Actuales',
-                  currencyFormatter.format(
-                      widget.compra.datosFinancieros['deudasActuales'])),
-              _buildDetailRow(
-                  'Capacidad de Pago',
-                  currencyFormatter
-                      .format(widget.compra.datosFinancieros['capacidadPago'])),
-            ]),
-            const SizedBox(height: 20),
-            _buildInfoCard('Buró de Crédito', [
-              _buildBuroInfo(),
-            ]),
-            const SizedBox(height: 20),
-            _buildInfoCard('Evaluación Bancaria', [
-              _buildBancoInfo(),
-            ]),
-            const SizedBox(height: 20),
-            if (widget.compra.estaEnRevision ||
-                (widget.compra.estaAprobada &&
-                    widget.compra.financiamientoAprobado)) ...[
-              const Text(
-                'Acciones',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (widget.compra.estaEnRevision)
-                Column(
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        backgroundColor: Colors.blue,
-                      ),
-                      onPressed: _isProcessing ? null : _evaluarFinanciamiento,
-                      child: _isProcessing
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Evaluar Financiamiento'),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                ),
-              if (widget.compra.estaAprobada &&
-                  widget.compra.financiamientoAprobado)
-                Column(
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        backgroundColor: Colors.green,
-                      ),
-                      onPressed: _isProcessing
-                          ? null
-                          : () => _aprobarCompra('Completada'),
-                      child: _isProcessing
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Marcar como Completada'),
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        side: const BorderSide(color: Colors.red),
-                      ),
-                      onPressed: _isProcessing
-                          ? null
-                          : () => _aprobarCompra('Rechazada'),
-                      child: const Text('Rechazar Compra'),
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 20),
             ],
-          ],
+          ),
         ),
       ),
     );
