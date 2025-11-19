@@ -144,7 +144,23 @@ class CompraProvider with ChangeNotifier {
         return true;
       } else {
         final data = json.decode(response.body);
-        _error = data['message'] ?? 'Error al aprobar compra';
+        final errorMessage = data['message'] ?? 'Error al aprobar compra';
+
+        if (errorMessage.contains('Stock insuficiente') ||
+            errorMessage.toLowerCase().contains('no hay suficiente stock') ||
+            errorMessage.toLowerCase().contains('insufficient stock')) {
+          _error =
+              'No hay suficiente stock para completar esta compra. Por favor, verifica el inventario.';
+        } else if (errorMessage.contains('no disponible') ||
+            errorMessage.toLowerCase().contains('not available')) {
+          _error = 'El vehículo ya no está disponible para la venta.';
+        } else if (errorMessage.contains('no activo') ||
+            errorMessage.toLowerCase().contains('not active')) {
+          _error = 'El vehículo ha sido desactivado y no puede venderse.';
+        } else {
+          _error = errorMessage;
+        }
+
         return false;
       }
     } catch (e) {

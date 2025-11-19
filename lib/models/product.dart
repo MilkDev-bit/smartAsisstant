@@ -18,6 +18,14 @@ class Product {
   final String color;
   final int numPuertas;
   final String? imageUrl;
+  final int stock;
+  final bool disponible;
+  final String? proveedorId;
+  final double costoCompra;
+  final DateTime? fechaCompra;
+  final String? compradoPorId;
+  final int vecesVendido;
+  final bool activo;
 
   Product({
     required this.id,
@@ -35,6 +43,14 @@ class Product {
     required this.color,
     required this.numPuertas,
     this.imageUrl,
+    this.stock = 1,
+    this.disponible = true,
+    this.proveedorId,
+    this.costoCompra = 0,
+    this.fechaCompra,
+    this.compradoPorId,
+    this.vecesVendido = 0,
+    this.activo = true,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
@@ -53,6 +69,20 @@ class Product {
         color: json["color"],
         numPuertas: json["numPuertas"],
         imageUrl: json["imageUrl"],
+        stock: json["stock"] ?? 1,
+        disponible: json["disponible"] ?? true,
+        proveedorId: json["proveedor"] is String
+            ? json["proveedor"]
+            : json["proveedor"]?["_id"],
+        costoCompra: (json["costoCompra"] ?? 0).toDouble(),
+        fechaCompra: json["fechaCompra"] != null
+            ? DateTime.parse(json["fechaCompra"])
+            : null,
+        compradoPorId: json["compradoPor"] is String
+            ? json["compradoPor"]
+            : json["compradoPor"]?["_id"],
+        vecesVendido: json["vecesVendido"] ?? 0,
+        activo: json["activo"] ?? true,
       );
 
   String get nombreCompleto => '$marca $modelo $ano';
@@ -73,5 +103,15 @@ class Product {
         "color": color,
         "numPuertas": numPuertas,
         "imageUrl": imageUrl,
+        "stock": stock,
+        "disponible": disponible,
+        if (proveedorId != null) "proveedor": proveedorId,
+        "costoCompra": costoCompra,
+        if (fechaCompra != null) "fechaCompra": fechaCompra!.toIso8601String(),
+        if (compradoPorId != null) "compradoPor": compradoPorId,
+        "vecesVendido": vecesVendido,
+        "activo": activo,
       };
+
+  bool get estaDisponible => disponible && activo && stock > 0;
 }

@@ -61,7 +61,7 @@ class ProductDetailScreen extends StatelessWidget {
   }
 
   Widget _buildDetailItem(String label, String value,
-      {bool isImportant = false}) {
+      {bool isImportant = false, Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
@@ -87,8 +87,90 @@ class ProductDetailScreen extends StatelessWidget {
               style: TextStyle(
                 fontWeight: isImportant ? FontWeight.bold : FontWeight.w600,
                 fontSize: isImportant ? 16 : 14,
-                color: isImportant ? Colors.green.shade700 : Colors.black87,
+                color: valueColor ??
+                    (isImportant ? Colors.green.shade700 : Colors.black87),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStockStatus() {
+    Color statusColor;
+    String statusText;
+    IconData statusIcon;
+
+    if (!coche.activo) {
+      statusColor = Colors.red;
+      statusText = 'Producto Inactivo';
+      statusIcon = Icons.block;
+    } else if (coche.stock <= 0) {
+      statusColor = Colors.red;
+      statusText = 'Sin Stock';
+      statusIcon = Icons.error_outline;
+    } else if (coche.stock <= 2) {
+      statusColor = Colors.orange;
+      statusText = 'Stock Bajo';
+      statusIcon = Icons.warning_amber;
+    } else {
+      statusColor = Colors.green;
+      statusText = 'Disponible';
+      statusIcon = Icons.check_circle;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: statusColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: statusColor, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: statusColor.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              statusIcon,
+              color: statusColor,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  statusText,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${coche.stock} ${coche.stock == 1 ? "unidad disponible" : "unidades disponibles"}',
+                  style: TextStyle(
+                    color: statusColor.withOpacity(0.8),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -174,6 +256,8 @@ class ProductDetailScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              _buildStockStatus(),
+                              const SizedBox(height: 20),
                               if (coche.imageUrl != null &&
                                   coche.imageUrl!.isNotEmpty)
                                 Container(
@@ -288,6 +372,13 @@ class ProductDetailScreen extends StatelessWidget {
                                   _buildDetailItem(
                                       'Condición', coche.condicion),
                                   _buildDetailItem('Tipo', coche.tipo),
+                                  _buildDetailItem(
+                                      'Stock', '${coche.stock} unidades'),
+                                  _buildDetailItem('Estado',
+                                      coche.activo ? 'Activo' : 'Inactivo',
+                                      valueColor: coche.activo
+                                          ? Colors.green
+                                          : Colors.red),
                                 ],
                               ),
                               _buildDetailSection(
@@ -305,6 +396,48 @@ class ProductDetailScreen extends StatelessWidget {
                                       '${numberFormatter.format(coche.kilometraje)} km'),
                                 ],
                               ),
+                              if (coche.costoCompra > 0)
+                                _buildDetailSection(
+                                  'Información Financiera',
+                                  Icons.attach_money,
+                                  Colors.teal,
+                                  [
+                                    _buildDetailItem(
+                                      'Precio Base',
+                                      currencyFormatter
+                                          .format(coche.precioBase),
+                                      isImportant: true,
+                                    ),
+                                    _buildDetailItem(
+                                      'Costo de Compra',
+                                      currencyFormatter
+                                          .format(coche.costoCompra),
+                                    ),
+                                    if (coche.precioBase > coche.costoCompra)
+                                      _buildDetailItem(
+                                        'Margen',
+                                        currencyFormatter.format(
+                                            coche.precioBase -
+                                                coche.costoCompra),
+                                        valueColor: Colors.green.shade700,
+                                      ),
+                                  ],
+                                ),
+                              if (coche.vecesVendido > 0)
+                                _buildDetailSection(
+                                  'Historial de Ventas',
+                                  Icons.history,
+                                  Colors.indigo,
+                                  [
+                                    _buildDetailItem('Veces Vendido',
+                                        coche.vecesVendido.toString()),
+                                    if (coche.fechaCompra != null)
+                                      _buildDetailItem(
+                                          'Fecha de Compra',
+                                          DateFormat('dd/MM/yyyy')
+                                              .format(coche.fechaCompra!)),
+                                  ],
+                                ),
                               if (coche.descripcion.isNotEmpty)
                                 _buildDetailSection(
                                   'Descripción',
@@ -348,16 +481,24 @@ class ProductDetailScreen extends StatelessWidget {
                         child: Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [
-                                Theme.of(context).primaryColor,
-                                Theme.of(context).primaryColor.withBlue(255),
-                              ],
+                              colors: coche.estaDisponible
+                                  ? [
+                                      Theme.of(context).primaryColor,
+                                      Theme.of(context)
+                                          .primaryColor
+                                          .withBlue(255),
+                                    ]
+                                  : [
+                                      Colors.grey.shade400,
+                                      Colors.grey.shade500,
+                                    ],
                             ),
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Theme.of(context)
-                                    .primaryColor
+                                color: (coche.estaDisponible
+                                        ? Theme.of(context).primaryColor
+                                        : Colors.grey)
                                     .withOpacity(0.3),
                                 blurRadius: 12,
                                 offset: const Offset(0, 6),
@@ -373,22 +514,31 @@ class ProductDetailScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      CrearCotizacionScreen(coche: coche),
-                                ),
-                              );
-                            },
-                            child: const Row(
+                            onPressed: coche.estaDisponible
+                                ? () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            CrearCotizacionScreen(coche: coche),
+                                      ),
+                                    );
+                                  }
+                                : null,
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.request_quote, size: 22),
-                                SizedBox(width: 12),
+                                Icon(
+                                  coche.estaDisponible
+                                      ? Icons.request_quote
+                                      : Icons.block,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 12),
                                 Text(
-                                  'Generar Cotización',
-                                  style: TextStyle(
+                                  coche.estaDisponible
+                                      ? 'Generar Cotización'
+                                      : 'Producto No Disponible',
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),

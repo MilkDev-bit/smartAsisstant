@@ -66,7 +66,12 @@ class AuthProvider with ChangeNotifier {
 
         _authStatus = AuthStatus.authenticated;
         await _initNotifications();
+
         print('Usuario autenticado: ${_user!.nombre}');
+
+        print('Foto de perfil: ${_user!.fotoPerfil}');
+        print('Teléfono: ${_user!.telefono}');
+        print('Activo: ${_user!.activo}');
       } else {
         throw Exception('Error al cargar perfil: ${response.statusCode}');
       }

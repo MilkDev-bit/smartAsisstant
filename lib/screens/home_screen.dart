@@ -160,28 +160,7 @@ class ProfileTab extends StatelessWidget {
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          Theme.of(context).primaryColor.withOpacity(0.2),
-                          Theme.of(context).primaryColor.withOpacity(0.1),
-                        ],
-                      ),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
-                        width: 3,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 50,
-                      color: Colors.white,
-                    ),
-                  ),
+                  _buildProfileAvatar(context, user),
                   const SizedBox(height: 16),
                   Text(
                     user?.nombre ?? 'Vendedor',
@@ -199,6 +178,17 @@ class ProfileTab extends StatelessWidget {
                       fontSize: 15,
                     ),
                   ),
+                  if (user?.telefono != null && user!.telefono!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        user.telefono!,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -219,6 +209,48 @@ class ProfileTab extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: (user?.activo ?? true)
+                          ? Colors.green.withOpacity(0.2)
+                          : Colors.red.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: (user?.activo ?? true)
+                            ? Colors.green.shade300
+                            : Colors.red.shade300,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          (user?.activo ?? true)
+                              ? Icons.check_circle
+                              : Icons.cancel,
+                          color: (user?.activo ?? true)
+                              ? Colors.green.shade200
+                              : Colors.red.shade200,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          (user?.activo ?? true) ? 'Activo' : 'Inactivo',
+                          style: TextStyle(
+                            color: (user?.activo ?? true)
+                                ? Colors.green.shade200
+                                : Colors.red.shade200,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -550,6 +582,57 @@ class ProfileTab extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildProfileAvatar(BuildContext context, dynamic user) {
+    if (user?.fotoPerfil != null && user!.fotoPerfil!.isNotEmpty) {
+      return Container(
+        width: 100,
+        height: 100,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 3,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: CircleAvatar(
+          radius: 50,
+          backgroundImage: NetworkImage(user.fotoPerfil!),
+          onBackgroundImageError: (exception, stackTrace) {},
+        ),
+      );
+    } else {
+      return Container(
+        width: 100,
+        height: 100,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).primaryColor.withOpacity(0.2),
+              Theme.of(context).primaryColor.withOpacity(0.1),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 3,
+          ),
+        ),
+        child: const Icon(
+          Icons.person,
+          size: 50,
+          color: Colors.white,
+        ),
+      );
+    }
   }
 
   void _showLogoutDialog(BuildContext context) {
