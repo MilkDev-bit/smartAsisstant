@@ -19,7 +19,16 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
   @override
   void initState() {
     super.initState();
-    _comprasFuture = _loadCompras();
+
+    // 🛑 CORRECCIÓN: Usar addPostFrameCallback para deferir la carga
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _comprasFuture = _loadCompras();
+      });
+    });
+
+    // Inicializar con Future vacío temporal
+    _comprasFuture = Future.value();
   }
 
   Future<void> _loadCompras() async {
@@ -398,7 +407,7 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
                     Expanded(
                       child: _buildInfoPill(
                         'Score',
-                        '${compra.resultadoBuro['score']}',
+                        '${compra.resultadoBuro['score'] ?? 'N/A'}',
                         Colors.blue.shade600,
                       ),
                     ),

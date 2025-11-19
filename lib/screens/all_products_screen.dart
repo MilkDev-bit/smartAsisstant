@@ -486,7 +486,8 @@ class _ProductsGridState extends State<_ProductsGrid> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
-                    childAspectRatio: 0.75,
+                    childAspectRatio:
+                        0.68, // CAMBIADO: de 0.75 a 0.68 para más altura
                   ),
                   itemCount: _filteredProducts.length,
                   itemBuilder: (context, index) {
@@ -527,14 +528,14 @@ class _ProductCard extends StatelessWidget {
             _showProductDetails(context, product);
           },
           child: Padding(
-            padding: const EdgeInsets.all(14.0),
+            padding: const EdgeInsets.all(12.0), // REDUCIDO: de 14 a 12
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Stack(
                   children: [
                     Container(
-                      height: 90,
+                      height: 80, // REDUCIDO: de 90 a 80
                       width: double.infinity,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -547,7 +548,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                       child: Icon(
                         _getVehicleIcon(product.tipo),
-                        size: 45,
+                        size: 40, // REDUCIDO: de 45 a 40
                         color: Theme.of(context).primaryColor,
                       ),
                     ),
@@ -609,48 +610,50 @@ class _ProductCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10), // REDUCIDO: de 12 a 10
                 Text(
                   '${product.marca} ${product.modelo}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                    fontSize: 14, // REDUCIDO: de 15 a 14
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4), // REDUCIDO: de 6 a 4
                 Row(
                   children: [
                     Icon(Icons.calendar_today,
-                        size: 12, color: Colors.grey[500]),
-                    const SizedBox(width: 4),
+                        size: 11,
+                        color: Colors.grey[500]), // REDUCIDO: de 12 a 11
+                    const SizedBox(width: 3), // REDUCIDO: de 4 a 3
                     Text(
                       '${product.ano}',
                       style: TextStyle(
                         color: Colors.grey[600],
-                        fontSize: 12,
+                        fontSize: 11, // REDUCIDO: de 12 a 11
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Icon(Icons.palette, size: 12, color: Colors.grey[500]),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6), // REDUCIDO: de 8 a 6
+                    Icon(Icons.palette,
+                        size: 11, color: Colors.grey[500]), // REDUCIDO
+                    const SizedBox(width: 3), // REDUCIDO: de 4 a 3
                     Expanded(
                       child: Text(
                         product.color,
                         style: TextStyle(
                           color: Colors.grey[600],
-                          fontSize: 12,
+                          fontSize: 11, // REDUCIDO: de 12 a 11
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 4), // MANTENIDO
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3), // REDUCIDO
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(6),
@@ -659,7 +662,7 @@ class _ProductCard extends StatelessWidget {
                     product.tipo,
                     style: TextStyle(
                       color: Colors.blue.shade700,
-                      fontSize: 11,
+                      fontSize: 10, // REDUCIDO: de 11 a 10
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -670,7 +673,7 @@ class _ProductCard extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
+                          horizontal: 8, vertical: 6), // REDUCIDO
                       decoration: BoxDecoration(
                         color: Colors.green.shade50,
                         borderRadius: BorderRadius.circular(10),
@@ -679,12 +682,13 @@ class _ProductCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.attach_money,
-                              size: 16, color: Colors.green.shade700),
+                              size: 14,
+                              color: Colors.green.shade700), // REDUCIDO
                           Text(
                             product.precioBase.toStringAsFixed(0),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 14, // REDUCIDO: de 16 a 14
                               color: Colors.green.shade700,
                             ),
                           ),
@@ -709,12 +713,12 @@ class _ProductCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4), // REDUCIDO: de 6 a 4
                 Text(
                   'VIN: ${product.vin.substring(0, 8)}...',
                   style: TextStyle(
                     color: Colors.grey[400],
-                    fontSize: 10,
+                    fontSize: 9, // REDUCIDO: de 10 a 9
                   ),
                 ),
               ],

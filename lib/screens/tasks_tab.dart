@@ -277,19 +277,49 @@ class _TasksTabState extends State<TasksTab> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis Tareas'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_task),
-            tooltip: 'Crear Tarea',
-            onPressed: _showCreateTaskModal,
+  Widget _buildFilterChips(TaskProvider provider) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          children: _filterOptions.asMap().entries.map((entry) {
+            final index = entry.key;
+            final option = entry.value;
+            final count = _getTaskCount(provider, index);
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: FilterChip(
+                label: Text('${option['label']} ($count)'),
+                selected: _selectedFilter == index,
+                onSelected: (bool selected) {
+                  setState(() {
+                    _selectedFilter = selected ? index : 0;
+                  });
+                },
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
       body: FutureBuilder(
         future: _tasksFuture,
         builder: (context, snapshot) {
@@ -309,47 +339,45 @@ class _TasksTabState extends State<TasksTab> {
 
               final filteredTasks = _getFilteredTasks(provider);
 
-              if (filteredTasks.isEmpty) {
+              if (filteredTasks.isEmpty && _selectedFilter == 0) {
                 return _buildEmptyState();
               }
 
               return Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: _filterOptions.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final option = entry.value;
-                          final count = _getTaskCount(provider, index);
-
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: FilterChip(
-                              label: Text('${option['label']} ($count)'),
-                              selected: _selectedFilter == index,
-                              onSelected: (bool selected) {
-                                setState(() {
-                                  _selectedFilter = selected ? index : 0;
-                                });
-                              },
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
+                  _buildFilterChips(provider),
                   Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: _refreshTasks,
-                      child: ListView.builder(
-                        itemCount: filteredTasks.length,
-                        itemBuilder: (context, index) =>
-                            _buildTaskCard(index, filteredTasks[index]),
-                      ),
-                    ),
+                    child: filteredTasks.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.filter_list_off,
+                                  size: 64,
+                                  color: Colors.grey[300],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No hay tareas ${_selectedFilter == 1 ? 'pendientes' : 'completadas'}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _refreshTasks,
+                            child: ListView.builder(
+                              padding:
+                                  const EdgeInsets.only(top: 8, bottom: 16),
+                              itemCount: filteredTasks.length,
+                              itemBuilder: (context, index) =>
+                                  _buildTaskCard(index, filteredTasks[index]),
+                            ),
+                          ),
                   ),
                 ],
               );

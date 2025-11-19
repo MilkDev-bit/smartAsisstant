@@ -6,7 +6,7 @@ import 'package:smartassistant_vendedor/providers/auth_provider.dart';
 import 'package:smartassistant_vendedor/providers/product_provider.dart';
 
 class CotizacionProvider with ChangeNotifier {
-  final AuthProvider _authProvider;
+  AuthProvider _authProvider;
   final ProductProvider _productProvider;
   final ApiService _api = ApiService();
 
@@ -18,10 +18,10 @@ class CotizacionProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  CotizacionProvider(this._authProvider, this._productProvider) {
-    if (_authProvider.isAuthenticated) {
-      _loadCotizaciones();
-    }
+  CotizacionProvider(this._authProvider, this._productProvider) {}
+
+  void updateDependencies(AuthProvider auth, ProductProvider product) {
+    _authProvider = auth;
   }
 
   String? get _token => _authProvider.token;

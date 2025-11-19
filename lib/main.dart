@@ -28,8 +28,19 @@ void main() {
             Provider.of<AuthProvider>(context, listen: false),
             Provider.of<ProductProvider>(context, listen: false),
           ),
-          update: (context, auth, product, previous) =>
-              CotizacionProvider(auth, product),
+          update: (context, auth, product, previous) {
+            if (previous == null) {
+              return CotizacionProvider(auth, product);
+            }
+
+            previous.updateDependencies(auth, product);
+
+            if (auth.isAuthenticated) {
+              Future.microtask(() => previous.fetchCotizacionesPendientes());
+            }
+
+            return previous;
+          },
         ),
         ChangeNotifierProxyProvider2<AuthProvider, CotizacionProvider,
             CompraProvider>(

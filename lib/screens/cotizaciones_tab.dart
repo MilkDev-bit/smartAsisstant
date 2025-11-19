@@ -19,7 +19,14 @@ class _CotizacionesTabState extends State<CotizacionesTab> {
   @override
   void initState() {
     super.initState();
-    _cotizacionesFuture = _loadCotizaciones();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _cotizacionesFuture = _loadCotizaciones();
+      });
+    });
+
+    _cotizacionesFuture = Future.value();
   }
 
   Future<void> _loadCotizaciones() async {
@@ -492,15 +499,6 @@ class _CotizacionesTabState extends State<CotizacionesTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cotizaciones Pendientes'),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 8.0),
-            child: VinScannerButton(),
-          ),
-        ],
-      ),
       body: FutureBuilder(
         future: _cotizacionesFuture,
         builder: (context, snapshot) {

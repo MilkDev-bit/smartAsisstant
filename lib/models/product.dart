@@ -54,36 +54,52 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
-        id: json["_id"] ?? json["id"],
-        marca: json["marca"],
-        modelo: json["modelo"],
-        ano: json["ano"],
-        precioBase: (json["precioBase"] as num).toDouble(),
-        kilometraje: json["kilometraje"],
-        vin: json["vin"],
-        descripcion: json["descripcion"],
-        condicion: json["condicion"],
-        tipo: json["tipo"],
-        transmision: json["transmision"],
-        motor: json["motor"],
-        color: json["color"],
-        numPuertas: json["numPuertas"],
+        id: json["_id"] ?? json["id"] ?? '',
+        marca: json["marca"] ?? '',
+        modelo: json["modelo"] ?? '',
+        ano: _parseInt(json["ano"]),
+        precioBase: _parseDouble(json["precioBase"]),
+        kilometraje: _parseInt(json["kilometraje"]),
+        vin: json["vin"] ?? '',
+        descripcion: json["descripcion"] ?? '',
+        condicion: json["condicion"] ?? '',
+        tipo: json["tipo"] ?? '',
+        transmision: json["transmision"] ?? '',
+        motor: json["motor"] ?? '',
+        color: json["color"] ?? '',
+        numPuertas: _parseInt(json["numPuertas"]),
         imageUrl: json["imageUrl"],
-        stock: json["stock"] ?? 1,
+        stock: _parseInt(json["stock"] ?? 1),
         disponible: json["disponible"] ?? true,
         proveedorId: json["proveedor"] is String
             ? json["proveedor"]
             : json["proveedor"]?["_id"],
-        costoCompra: (json["costoCompra"] ?? 0).toDouble(),
+        costoCompra: _parseDouble(json["costoCompra"] ?? 0),
         fechaCompra: json["fechaCompra"] != null
-            ? DateTime.parse(json["fechaCompra"])
+            ? DateTime.tryParse(json["fechaCompra"])
             : null,
         compradoPorId: json["compradoPor"] is String
             ? json["compradoPor"]
             : json["compradoPor"]?["_id"],
-        vecesVendido: json["vecesVendido"] ?? 0,
+        vecesVendido: _parseInt(json["vecesVendido"] ?? 0),
         activo: json["activo"] ?? true,
       );
+
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
 
   String get nombreCompleto => '$marca $modelo $ano';
 

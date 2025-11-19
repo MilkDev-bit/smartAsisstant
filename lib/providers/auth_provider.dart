@@ -68,10 +68,10 @@ class AuthProvider with ChangeNotifier {
         await _initNotifications();
 
         print('Usuario autenticado: ${_user!.nombre}');
-
         print('Foto de perfil: ${_user!.fotoPerfil}');
         print('Teléfono: ${_user!.telefono}');
         print('Activo: ${_user!.activo}');
+        print('2FA Enabled: ${_user!.twoFactorEnabled}');
       } else {
         throw Exception('Error al cargar perfil: ${response.statusCode}');
       }
@@ -207,7 +207,8 @@ class AuthProvider with ChangeNotifier {
 
     try {
       if (enable) {
-        await _twoFactorService.enable2FA(_token!);
+        final message = await _twoFactorService.generate2FA(_token!);
+        throw Exception('CODE_SENT:$message');
       } else {
         await _twoFactorService.disable2FA(_token!);
         if (_user != null) {
@@ -216,11 +217,14 @@ class AuthProvider with ChangeNotifier {
             email: _user!.email,
             nombre: _user!.nombre,
             rol: _user!.rol,
+            telefono: _user?.telefono,
+            fotoPerfil: _user?.fotoPerfil,
+            activo: _user?.activo ?? true,
             twoFactorEnabled: false,
           );
         }
+        notifyListeners();
       }
-      notifyListeners();
     } catch (e) {
       rethrow;
     }
@@ -237,6 +241,9 @@ class AuthProvider with ChangeNotifier {
           email: _user!.email,
           nombre: _user!.nombre,
           rol: _user!.rol,
+          telefono: _user?.telefono,
+          fotoPerfil: _user?.fotoPerfil,
+          activo: _user?.activo ?? true,
           twoFactorEnabled: true,
         );
       }
