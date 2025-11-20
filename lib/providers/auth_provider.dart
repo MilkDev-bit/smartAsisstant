@@ -53,21 +53,44 @@ class AuthProvider with ChangeNotifier {
     if (uri == null) return;
 
     print('URI recibida: $uri');
+    print('Scheme: ${uri.scheme}');
+    print('Host: ${uri.host}');
+    print('Path: ${uri.path}');
+    print('Query params: ${uri.queryParameters}');
+
+    if (uri.scheme == 'smartassistant' && uri.host == 'login-success') {
+      await _processDeepLink(uri);
+      return;
+    }
+
+    if (uri.scheme == 'smartassistant' && uri.host == 'login') {
+      await _processDeepLink(uri);
+      return;
+    }
+
+    print('URI no manejada: $uri');
+  }
+
+  Future<void> _processDeepLink(Uri uri) async {
+    print('Procesando deep link: $uri');
 
     if (uri.queryParameters.containsKey('token')) {
       final token = uri.queryParameters['token']!;
-      print('Token recibido via Google OAuth: $token');
+      print('Token recibido: $token');
       await _saveSession(token);
+      return;
     }
 
-    if (uri.path.contains('autenticacion-2fa') &&
-        uri.queryParameters.containsKey('userId')) {
+    if (uri.queryParameters.containsKey('userId')) {
       final userId = uri.queryParameters['userId']!;
       _userIdFor2FA = userId;
       _authStatus = AuthStatus.twoFactorRequired;
       notifyListeners();
-      print('2FA requerido para usuario Google: $userId');
+      print('2FA requerido para usuario: $userId');
+      return;
     }
+
+    print('Deep link sin parámetros reconocidos');
   }
 
   Future<void> _tryLoadToken() async {
