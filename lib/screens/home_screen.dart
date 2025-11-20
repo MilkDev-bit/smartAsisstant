@@ -44,6 +44,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _showCreateTaskModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => const CreateTaskModal(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,7 +86,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       tooltip: 'Actualizar Compras',
                     ),
                   ]
-                : null,
+                : _selectedIndex == 2
+                    ? [
+                        IconButton(
+                          icon: const Icon(Icons.add_task),
+                          tooltip: 'Crear Tarea',
+                          onPressed: _showCreateTaskModal,
+                        ),
+                      ]
+                    : null,
       ),
       body: IndexedStack(
         index: _selectedIndex,
@@ -308,69 +324,19 @@ class ProfileTab extends StatelessWidget {
                                   fontSize: 15,
                                 ),
                               ),
-                              subtitle: const Text(
-                                'Aumenta la seguridad de tu cuenta',
-                                style: TextStyle(fontSize: 12),
+                              subtitle: Text(
+                                user?.twoFactorEnabled ?? false
+                                    ? 'Protección activa - Se solicitará código al iniciar sesión'
+                                    : 'Añade una capa extra de seguridad',
+                                style: const TextStyle(fontSize: 12),
                               ),
                               trailing: Switch(
                                 value: user?.twoFactorEnabled ?? false,
-                                onChanged: (value) async {
-                                  final s = ScaffoldMessenger.of(context);
-
-                                  try {
-                                    if (value) {
-                                      // Activar: Generar código
-                                      await authProvider.toggle2FA(true);
-                                    } else {
-                                      // Desactivar directamente
-                                      await authProvider.toggle2FA(false);
-                                      s.showSnackBar(SnackBar(
-                                        content: const Text(
-                                            '2FA desactivado correctamente'),
-                                        backgroundColor: Colors.green.shade600,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                      ));
-                                    }
-                                  } catch (e) {
-                                    final errorMsg = e
-                                        .toString()
-                                        .replaceAll('Exception: ', '');
-
-                                    // Si el mensaje indica que el código fue enviado
-                                    if (errorMsg.startsWith('CODE_SENT:')) {
-                                      final message = errorMsg.replaceFirst(
-                                          'CODE_SENT:', '');
-
-                                      s.showSnackBar(SnackBar(
-                                        content: Text(message),
-                                        backgroundColor: Colors.blue.shade600,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                      ));
-
-                                      // Mostrar diálogo para ingresar el código
-                                      _show2FAVerificationDialog(context);
-                                    } else {
-                                      // Error real
-                                      s.showSnackBar(SnackBar(
-                                        content: Text('Error: $errorMsg'),
-                                        backgroundColor: Colors.red.shade600,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                      ));
-                                    }
-                                  }
-                                },
+                                onChanged: (value) => _handle2FAToggle(
+                                  context,
+                                  value,
+                                  authProvider,
+                                ),
                               ),
                             ),
                             Divider(height: 1, color: Colors.grey.shade200),
@@ -662,13 +628,23 @@ class ProfileTab extends StatelessWidget {
     }
   }
 
-  void _show2FAVerificationDialog(BuildContext context) {
-    final codeController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
+  void _handle2FAToggle(
+    BuildContext context,
+    bool value,
+    AuthProvider authProvider,
+  ) async {
+    if (value) {
+      // Activar 2FA con confirmación
+      _showActivate2FADialog(context, authProvider);
+    } else {
+      // Desactivar 2FA con confirmación
+      _showDeactivate2FADialog(context, authProvider);
+    }
+  }
 
+  void _showActivate2FADialog(BuildContext context, AuthProvider authProvider) {
     showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
@@ -677,120 +653,188 @@ class ProfileTab extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: Colors.green.shade50,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.security, color: Colors.blue.shade600),
+              child: Icon(Icons.security, color: Colors.green.shade600),
             ),
             const SizedBox(width: 12),
             const Expanded(
               child: Text(
-                'Verificar 2FA',
+                'Activar 2FA',
                 style: TextStyle(fontSize: 18),
               ),
             ),
           ],
         ),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Ingresa el código de 6 dígitos que enviamos a tu correo electrónico.',
-                style: TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: codeController,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                decoration: const InputDecoration(
-                  labelText: 'Código de 6 dígitos',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.password),
-                  counterText: '',
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¿Deseas activar la autenticación de dos factores?',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'A partir del próximo inicio de sesión, recibirás un código de 6 dígitos en tu correo electrónico para verificar tu identidad.',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+            SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.check_circle, size: 18, color: Colors.green),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Mayor seguridad en tu cuenta',
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa el código';
-                  }
-                  if (value.length != 6) {
-                    return 'El código debe tener 6 dígitos';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.amber.shade200),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.email, size: 18, color: Colors.blue),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Código enviado por email',
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline,
-                        size: 20, color: Colors.amber.shade700),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'El código expira en 10 minutos',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              codeController.dispose();
-              Navigator.of(ctx).pop();
-            },
+            onPressed: () => Navigator.of(ctx).pop(),
             child: Text('Cancelar', style: TextStyle(color: Colors.grey[600])),
           ),
           ElevatedButton(
             onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                final code = codeController.text.trim();
-                final s = ScaffoldMessenger.of(context);
-                final authProvider =
-                    Provider.of<AuthProvider>(context, listen: false);
+              Navigator.of(ctx).pop();
+              final s = ScaffoldMessenger.of(context);
 
-                try {
-                  await authProvider.verify2FASetup(code);
-
-                  codeController.dispose();
-                  Navigator.of(ctx).pop();
-
-                  s.showSnackBar(SnackBar(
-                    content: const Text('2FA activado correctamente'),
-                    backgroundColor: Colors.green.shade600,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ));
-                } catch (e) {
-                  s.showSnackBar(SnackBar(
-                    content: Text(
-                        'Error: ${e.toString().replaceAll("Exception: ", "")}'),
-                    backgroundColor: Colors.red.shade600,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ));
-                }
+              try {
+                await authProvider.toggle2FA(true);
+                s.showSnackBar(SnackBar(
+                  content: const Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.white),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text('2FA activado correctamente'),
+                      ),
+                    ],
+                  ),
+                  backgroundColor: Colors.green.shade600,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ));
+              } catch (e) {
+                s.showSnackBar(SnackBar(
+                  content: Text(
+                      'Error: ${e.toString().replaceAll("Exception: ", "")}'),
+                  backgroundColor: Colors.red.shade600,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ));
               }
             },
-            child: const Text('Verificar'),
+            child: const Text('Activar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeactivate2FADialog(
+      BuildContext context, AuthProvider authProvider) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.warning_amber, color: Colors.orange.shade600),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Desactivar 2FA',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¿Estás seguro de desactivar el 2FA?',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Tu cuenta será menos segura. Ya no se solicitará código de verificación al iniciar sesión.',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final s = ScaffoldMessenger.of(context);
+
+              try {
+                await authProvider.toggle2FA(false);
+                s.showSnackBar(SnackBar(
+                  content: const Text('2FA desactivado correctamente'),
+                  backgroundColor: Colors.orange.shade600,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ));
+              } catch (e) {
+                s.showSnackBar(SnackBar(
+                  content: Text(
+                      'Error: ${e.toString().replaceAll("Exception: ", "")}'),
+                  backgroundColor: Colors.red.shade600,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ));
+              }
+            },
+            child: Text(
+              'Desactivar',
+              style: TextStyle(
+                color: Colors.orange.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
