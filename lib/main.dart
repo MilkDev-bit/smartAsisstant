@@ -7,10 +7,18 @@ import 'package:smartassistant_vendedor/providers/task_provider.dart';
 import 'package:smartassistant_vendedor/providers/user_provider.dart';
 import 'package:smartassistant_vendedor/providers/compra_provider.dart';
 import 'package:smartassistant_vendedor/screens/auth_wrapper.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  OneSignal.initialize('6be7a393-fe66-4d7f-b626-56cf19b60580');
+
+  OneSignal.Notifications.requestPermission(true);
+  OneSignal.User.pushSubscription.optIn();
+
   runApp(
     MultiProvider(
       providers: [

@@ -14,23 +14,25 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (context) => AuthProvider()),
-          ChangeNotifierProxyProvider<AuthProvider, CotizacionProvider>(
-            create: (context) => CotizacionProvider(
+          ChangeNotifierProvider(
+            create: (context) => ProductProvider(
               Provider.of<AuthProvider>(context, listen: false),
             ),
-            update: (context, auth, previous) => CotizacionProvider(auth),
+          ),
+          ChangeNotifierProxyProvider2<AuthProvider, ProductProvider,
+              CotizacionProvider>(
+            create: (context) => CotizacionProvider(
+              Provider.of<AuthProvider>(context, listen: false),
+              Provider.of<ProductProvider>(context, listen: false),
+            ),
+            update: (context, auth, product, previous) =>
+                CotizacionProvider(auth, product),
           ),
           ChangeNotifierProxyProvider<AuthProvider, TaskProvider>(
             create: (context) => TaskProvider(
               Provider.of<AuthProvider>(context, listen: false),
             ),
             update: (context, auth, previous) => TaskProvider(auth),
-          ),
-          ChangeNotifierProxyProvider<AuthProvider, ProductProvider>(
-            create: (context) => ProductProvider(
-              Provider.of<AuthProvider>(context, listen: false),
-            ),
-            update: (context, auth, previous) => ProductProvider(auth),
           ),
         ],
         child: const MyApp(),
@@ -40,7 +42,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(LoginScreen), findsOneWidget);
-
     expect(find.text('Cotizaciones Pendientes'), findsNothing);
   });
 }

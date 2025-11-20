@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:smartassistant_vendedor/providers/auth_provider.dart';
 import 'package:smartassistant_vendedor/screens/register_screen.dart';
 import 'package:smartassistant_vendedor/screens/forgot_password_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

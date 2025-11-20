@@ -30,7 +30,7 @@ android {
         
         manifestPlaceholders += mapOf(
             "onesignal_app_id" to "6be7a393-fe66-4d7f-b626-56cf19b6b500",
-            "onesignal_google_project_number" to "REMOTE"
+            "onesignal_google_project_number" to "295058119388"
         )
     }
 
@@ -46,3 +46,5 @@ android {
 flutter {
     source = "../.."
 }
+
+apply(plugin = "com.google.gms.google-services")

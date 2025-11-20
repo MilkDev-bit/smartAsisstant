@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:uni_links/uni_links.dart';
+import 'dart:async';
 import 'package:smartassistant_vendedor/models/user.dart';
 import 'package:smartassistant_vendedor/services/notification_service.dart'
     as notification_service;
@@ -20,6 +23,8 @@ class AuthProvider with ChangeNotifier {
   final ApiService _api = ApiService();
   final TwoFactorService _twoFactorService = TwoFactorService();
 
+  StreamSubscription? _uriLinkSubscription;
+
   String? _token;
   ValidatedUser? _user;
   AuthStatus _authStatus = AuthStatus.uninitialized;
@@ -33,6 +38,36 @@ class AuthProvider with ChangeNotifier {
 
   AuthProvider() {
     _tryLoadToken();
+    _initUniLinks();
+  }
+
+  void _initUniLinks() {
+    _uriLinkSubscription = uriLinkStream.listen((Uri? uri) {
+      _handleIncomingLink(uri);
+    }, onError: (err) {
+      print('Error en uni_links: $err');
+    });
+  }
+
+  void _handleIncomingLink(Uri? uri) async {
+    if (uri == null) return;
+
+    print('URI recibida: $uri');
+
+    if (uri.queryParameters.containsKey('token')) {
+      final token = uri.queryParameters['token']!;
+      print('Token recibido via Google OAuth: $token');
+      await _saveSession(token);
+    }
+
+    if (uri.path.contains('autenticacion-2fa') &&
+        uri.queryParameters.containsKey('userId')) {
+      final userId = uri.queryParameters['userId']!;
+      _userIdFor2FA = userId;
+      _authStatus = AuthStatus.twoFactorRequired;
+      notifyListeners();
+      print('2FA requerido para usuario Google: $userId');
+    }
   }
 
   Future<void> _tryLoadToken() async {
@@ -135,9 +170,19 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await Future.delayed(const Duration(seconds: 2));
-      throw Exception(
-          'Login con Google estará disponible en la próxima actualización');
+      const googleAuthUrl =
+          "https://crm-back-final-production.up.railway.app/auth/google";
+
+      if (await canLaunchUrl(Uri.parse(googleAuthUrl))) {
+        await launchUrl(
+          Uri.parse(googleAuthUrl),
+          mode: LaunchMode.externalApplication,
+        );
+
+        print('Redirigiendo a Google OAuth...');
+      } else {
+        throw Exception("No se pudo abrir Google OAuth");
+      }
     } catch (e) {
       _authStatus = AuthStatus.unauthenticated;
       notifyListeners();
@@ -202,13 +247,13 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> toggle2FA(bool enable) async {
+  Future<String> toggle2FA(bool enable) async {
     if (_token == null) throw Exception('No autenticado');
 
     try {
       if (enable) {
         final message = await _twoFactorService.generate2FA(_token!);
-        throw Exception('CODE_SENT:$message');
+        return message;
       } else {
         await _twoFactorService.disable2FA(_token!);
         if (_user != null) {
@@ -224,6 +269,7 @@ class AuthProvider with ChangeNotifier {
           );
         }
         notifyListeners();
+        return '2FA desactivado correctamente';
       }
     } catch (e) {
       rethrow;
@@ -275,5 +321,11 @@ class AuthProvider with ChangeNotifier {
     _user = null;
     _authStatus = AuthStatus.unauthenticated;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _uriLinkSubscription?.cancel();
+    super.dispose();
   }
 }
