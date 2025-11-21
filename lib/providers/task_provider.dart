@@ -149,24 +149,20 @@ class TaskProvider with ChangeNotifier {
   }
 
   List<Task> get overdueTasks {
-    final now = DateTime.now();
-    return _tasks
-        .where((task) => !task.isCompleted && task.dueDate.isBefore(now))
-        .toList();
+    return _tasks.where((task) => task.isOverdue).toList();
   }
 
   List<Task> get todayTasks {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(const Duration(days: 1));
-
-    return _tasks
-        .where((task) =>
-            !task.isCompleted &&
-            task.dueDate.isAfter(today) &&
-            task.dueDate.isBefore(tomorrow))
-        .toList();
+    return _tasks.where((task) => task.isToday).toList();
   }
+
+  List<Task> get urgentTasks {
+    return _tasks.where((task) => task.isUrgent).toList();
+  }
+
+  int get urgentTaskCount => urgentTasks.length;
+
+  int get overdueTaskCount => overdueTasks.length;
 
   void clearError() {
     _error = null;
