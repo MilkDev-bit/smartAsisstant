@@ -64,7 +64,8 @@ class Cotizacion {
       plazoMeses: json['plazoMeses'],
       enganche: (json['enganche'] as num).toDouble(),
       precioCoche: (json['precioCoche'] as num).toDouble(),
-      coche: Product.fromJson(json['coche']),
+      coche: Product.fromJson(
+          json['coche'] is Map<String, dynamic> ? json['coche'] : {}),
       cliente: ClienteSimple.fromJson(json['cliente']),
     );
   }

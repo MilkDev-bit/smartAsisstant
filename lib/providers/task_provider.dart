@@ -23,13 +23,13 @@ class TaskProvider with ChangeNotifier {
   Future<void> fetchTasks() async {
     if (_token == null) {
       _error = 'No autenticado';
-      notifyListeners();
+      _notifyAfterBuild();
       return;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       final response = await _api.get('tasks/mis-tareas', _token!);
@@ -50,7 +50,7 @@ class TaskProvider with ChangeNotifier {
       _tasks = [];
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notifyAfterBuild();
     }
   }
 
@@ -71,7 +71,7 @@ class TaskProvider with ChangeNotifier {
           _tasks[index].isCompleted = isCompleted;
           print('Tarea $taskId actualizada: $isCompleted');
         }
-        notifyListeners();
+        _notifyAfterBuild();
         return true;
       } else {
         final data = json.decode(response.body);
@@ -94,7 +94,7 @@ class TaskProvider with ChangeNotifier {
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       final body = json.encode({
@@ -111,7 +111,7 @@ class TaskProvider with ChangeNotifier {
         final Task newTask = Task.fromJson(data);
 
         _tasks.add(newTask);
-        notifyListeners();
+        _notifyAfterBuild();
         print('Nueva tarea creada: $title');
 
         _isLoading = false;
@@ -121,13 +121,13 @@ class TaskProvider with ChangeNotifier {
         _error = data['message'] ??
             'Error al crear la tarea: ${response.statusCode}';
         _isLoading = false;
-        notifyListeners();
+        _notifyAfterBuild();
         return false;
       }
     } catch (e) {
       _error = 'Error al crear la tarea: ${e.toString()}';
       _isLoading = false;
-      notifyListeners();
+      _notifyAfterBuild();
       return false;
     }
   }
@@ -170,11 +170,17 @@ class TaskProvider with ChangeNotifier {
 
   void clearError() {
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
   }
 
   void clearTasks() {
     _tasks = [];
-    notifyListeners();
+    _notifyAfterBuild();
+  }
+
+  void _notifyAfterBuild() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 }

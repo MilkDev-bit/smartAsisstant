@@ -25,7 +25,7 @@ class ProductProvider with ChangeNotifier {
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       final response = await _api.get('products/tienda', _token!);
@@ -43,7 +43,7 @@ class ProductProvider with ChangeNotifier {
       _allProducts = [];
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notifyAfterBuild();
     }
   }
 
@@ -108,11 +108,17 @@ class ProductProvider with ChangeNotifier {
 
   void clearError() {
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
   }
 
   void clearProducts() {
     _allProducts = [];
-    notifyListeners();
+    _notifyAfterBuild();
+  }
+
+  void _notifyAfterBuild() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 }

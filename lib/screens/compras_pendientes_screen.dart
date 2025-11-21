@@ -19,16 +19,7 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
   @override
   void initState() {
     super.initState();
-
-    // 🛑 CORRECCIÓN: Usar addPostFrameCallback para deferir la carga
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        _comprasFuture = _loadCompras();
-      });
-    });
-
-    // Inicializar con Future vacío temporal
-    _comprasFuture = Future.value();
+    _comprasFuture = _loadCompras();
   }
 
   Future<void> _loadCompras() async {
@@ -37,6 +28,7 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
   }
 
   Future<void> _refreshCompras() async {
+    if (!mounted) return;
     setState(() {
       _comprasFuture = _loadCompras();
     });
@@ -218,6 +210,7 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
           Container(
             width: 80,
             height: 80,
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Theme.of(context).primaryColor.withOpacity(0.1),
               shape: BoxShape.circle,
@@ -246,6 +239,26 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
   Widget _buildCompraCard(BuildContext context, Compra compra) {
     final currencyFormatter =
         NumberFormat.currency(locale: 'es_MX', symbol: '\$');
+
+    final cliente = compra.cliente;
+    final cot = compra.cotizacion;
+    final coche = cot.coche;
+
+    final nombreCliente = cliente.nombre;
+    final emailCliente = cliente.email;
+
+    final nombreCoche = coche?.nombreCompleto ?? 'Vehículo no disponible';
+    final vin = coche?.vin ?? '---';
+
+    final resultadoBuro = compra.resultadoBuro;
+    final score = (resultadoBuro != null && resultadoBuro['score'] != null)
+        ? resultadoBuro['score'].toString()
+        : 'N/A';
+
+    final nivelRiesgo =
+        (resultadoBuro != null && resultadoBuro['nivelRiesgo'] != null)
+            ? resultadoBuro['nivelRiesgo'].toString()
+            : null;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -284,7 +297,7 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            compra.cotizacion.coche.nombreCompleto,
+                            nombreCoche,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -295,7 +308,7 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'VIN: ${compra.cotizacion.coche.vin}',
+                            'VIN: $vin',
                             style: TextStyle(
                               color: Colors.grey[500],
                               fontSize: 12,
@@ -343,52 +356,47 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
                     color: Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Column(
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .primaryColor
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.person_outline,
+                          size: 20,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              nombreCliente,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            child: Icon(
-                              Icons.person_outline,
-                              size: 20,
-                              color: Theme.of(context).primaryColor,
+                            Text(
+                              emailCliente,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  compra.cliente.nombre,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  compra.cliente.email,
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -407,12 +415,33 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
                     Expanded(
                       child: _buildInfoPill(
                         'Score',
-                        '${compra.resultadoBuro['score'] ?? 'N/A'}',
+                        score,
                         Colors.blue.shade600,
                       ),
                     ),
                   ],
                 ),
+                if (nivelRiesgo != null) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.assessment_outlined,
+                        size: 14,
+                        color: Colors.grey[500],
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Riesgo: $nivelRiesgo',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -438,11 +467,7 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
                         ),
                       ),
                       Text(
-                        compra.pagoMensualAprobado != null
-                            ? currencyFormatter
-                                .format(compra.pagoMensualAprobado)
-                            : currencyFormatter
-                                .format(compra.cotizacion.pagoMensual),
+                        currencyFormatter.format(compra.pagoMensualAprobado),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -452,27 +477,6 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
                     ],
                   ),
                 ),
-                if (compra.resultadoBuro['nivelRiesgo'] != null) ...[
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.assessment_outlined,
-                        size: 14,
-                        color: Colors.grey[500],
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Riesgo: ${compra.resultadoBuro['nivelRiesgo']}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ],
             ),
           ),
@@ -621,38 +625,40 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
                   child: FutureBuilder(
                     future: _comprasFuture,
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return _buildLoadingState();
+                      if (snapshot.connectionState == ConnectionState.done ||
+                          snapshot.connectionState == ConnectionState.none) {
+                        return Consumer<CompraProvider>(
+                          builder: (context, provider, child) {
+                            if (provider.isLoading) {
+                              return _buildLoadingState();
+                            }
+
+                            if (provider.error != null) {
+                              return _buildErrorState(provider.error!);
+                            }
+
+                            if (provider.comprasPendientes.isEmpty) {
+                              return _buildEmptyState();
+                            }
+
+                            return RefreshIndicator(
+                              onRefresh: _refreshCompras,
+                              child: ListView.builder(
+                                padding:
+                                    const EdgeInsets.only(top: 20, bottom: 20),
+                                itemCount: provider.comprasPendientes.length,
+                                itemBuilder: (context, index) =>
+                                    _buildCompraCard(
+                                  context,
+                                  provider.comprasPendientes[index],
+                                ),
+                              ),
+                            );
+                          },
+                        );
                       }
 
-                      return Consumer<CompraProvider>(
-                        builder: (context, provider, child) {
-                          if (provider.isLoading) {
-                            return _buildLoadingState();
-                          }
-
-                          if (provider.error != null) {
-                            return _buildErrorState(provider.error!);
-                          }
-
-                          if (provider.comprasPendientes.isEmpty) {
-                            return _buildEmptyState();
-                          }
-
-                          return RefreshIndicator(
-                            onRefresh: _refreshCompras,
-                            child: ListView.builder(
-                              padding:
-                                  const EdgeInsets.only(top: 20, bottom: 20),
-                              itemCount: provider.comprasPendientes.length,
-                              itemBuilder: (context, index) => _buildCompraCard(
-                                context,
-                                provider.comprasPendientes[index],
-                              ),
-                            ),
-                          );
-                        },
-                      );
+                      return _buildLoadingState();
                     },
                   ),
                 ),

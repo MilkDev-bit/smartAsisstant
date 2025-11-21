@@ -311,7 +311,8 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
     final currencyFormatter =
         NumberFormat.currency(locale: 'es_MX', symbol: '\$');
 
-    if (banco == null) {
+    // Si no hay resultados aún
+    if (banco == null || banco.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -337,7 +338,10 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
       );
     }
 
-    if (banco['aprobado'] == true) {
+    final aprobado = banco['aprobado'] == true;
+
+    // 📌 Si fue aprobado
+    if (aprobado) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -370,83 +374,97 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildDetailRow('Monto Aprobado',
-              currencyFormatter.format(banco['montoAprobado'])),
-          _buildDetailRow('Tasa de Interés',
-              '${((banco['tasaInteres'] ?? 0) * 100).toStringAsFixed(1)}%'),
           _buildDetailRow(
-              'Pago Mensual', currencyFormatter.format(banco['pagoMensual']),
-              isBold: true),
-          _buildDetailRow('Plazo Aprobado', '${banco['plazoAprobado']} meses'),
-        ],
-      );
-    } else {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.red.shade50,
-                  Colors.red.shade100,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.red.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.cancel, color: Colors.red.shade700, size: 28),
-                const SizedBox(width: 12),
-                Text(
-                  'RECHAZADO',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red.shade700,
-                  ),
-                ),
-              ],
-            ),
+            'Monto Aprobado',
+            currencyFormatter.format(banco['montoAprobado'] ?? 0),
           ),
-          const SizedBox(height: 16),
           _buildDetailRow(
-              'Motivo', banco['motivoRechazo'] ?? 'No especificado'),
-          if (banco['sugerencias'] != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Sugerencias:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[700],
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ...((banco['sugerencias'] as List).map((sug) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('• ', style: TextStyle(color: Colors.grey[600])),
-                      Expanded(
-                        child: Text(
-                          sug,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ))),
-          ],
+            'Tasa de Interés',
+            '${((banco['tasaInteres'] ?? 0) * 100).toStringAsFixed(1)}%',
+          ),
+          _buildDetailRow(
+            'Pago Mensual',
+            currencyFormatter.format(banco['pagoMensual'] ?? 0),
+            isBold: true,
+          ),
+          _buildDetailRow(
+            'Plazo Aprobado',
+            '${banco['plazoAprobado'] ?? 0} meses',
+          ),
         ],
       );
     }
+
+    // ❌ Si fue rechazado
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.red.shade50,
+                Colors.red.shade100,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.red.shade200),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.cancel, color: Colors.red.shade700, size: 28),
+              const SizedBox(width: 12),
+              Text(
+                'RECHAZADO',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildDetailRow(
+          'Motivo',
+          banco['motivoRechazo'] ?? 'No especificado',
+        ),
+        if (banco['sugerencias'] != null && banco['sugerencias'] is List) ...[
+          const SizedBox(height: 12),
+          Text(
+            'Sugerencias:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...(banco['sugerencias'] as List).map(
+            (sug) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('• ', style: TextStyle(color: Colors.grey[600])),
+                  Expanded(
+                    child: Text(
+                      sug.toString(),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 
   @override
@@ -654,7 +672,8 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
                         ]),
                         _buildInfoCard('Vehículo', [
                           Text(
-                            widget.compra.cotizacion.coche.nombreCompleto,
+                            widget.compra.cotizacion.coche?.nombreCompleto ??
+                                'Vehículo Desconocido',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -662,8 +681,8 @@ class _CompraDetailScreenState extends State<CompraDetailScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          _buildDetailRow(
-                              'VIN', widget.compra.cotizacion.coche.vin),
+                          _buildDetailRow('VIN',
+                              widget.compra.cotizacion.coche?.vin ?? 'N/A'),
                           const Divider(height: 24),
                           _buildDetailRow(
                               'Precio',

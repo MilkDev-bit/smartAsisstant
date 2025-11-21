@@ -12,6 +12,7 @@ class CompraProvider with ChangeNotifier {
   List<Compra> _misCompras = [];
   bool _isLoading = false;
   String? _error;
+  bool _disposed = false;
 
   List<Compra> get comprasPendientes => _comprasPendientes;
   List<Compra> get misCompras => _misCompras;
@@ -20,71 +21,111 @@ class CompraProvider with ChangeNotifier {
 
   CompraProvider(this._authProvider);
 
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   String? get _token => _authProvider.token;
 
   Future<void> fetchComprasPendientes() async {
     if (!_authProvider.isAuthenticated || _token == null) {
       _error = 'No autenticado';
-      notifyListeners();
+      _notifyAfterBuild();
       return;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       final response = await _api.get('compra/pendientes', _token!);
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        _comprasPendientes = data.map((json) => Compra.fromJson(json)).toList();
+        final dynamic decoded = json.decode(response.body);
+
+        if (decoded is List) {
+          final List<Compra> temp = [];
+          for (var item in decoded) {
+            try {
+              if (item is Map<String, dynamic> || item is String) {
+                temp.add(Compra.fromJson(item));
+              } else {
+                if (item != null) {
+                  temp.add(Compra.fromJson(item));
+                }
+              }
+            } catch (e, st) {
+              debugPrint('Error parsing compra item: $e\n$st\nitem: $item');
+            }
+          }
+          _comprasPendientes = temp;
+        } else {
+          _error = 'Respuesta inesperada del servidor.';
+          _comprasPendientes = [];
+        }
+
         _error = null;
-        print('${_comprasPendientes.length} compras pendientes cargadas');
+        debugPrint('${_comprasPendientes.length} compras pendientes cargadas');
       } else {
         _error = 'Error al cargar compras pendientes: ${response.statusCode}';
         _comprasPendientes = [];
       }
-    } catch (e) {
+    } catch (e, st) {
       _error = 'Error de conexión: $e';
       _comprasPendientes = [];
-      print('Error cargando compras pendientes: $e');
+      debugPrint('Error cargando compras pendientes: $e\n$st');
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notifyAfterBuild();
     }
   }
 
   Future<void> fetchMisCompras() async {
     if (!_authProvider.isAuthenticated || _token == null) {
       _error = 'No autenticado';
-      notifyListeners();
+      _notifyAfterBuild();
       return;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       final response = await _api.get('compra/mis-compras', _token!);
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        _misCompras = data.map((json) => Compra.fromJson(json)).toList();
+        final dynamic decoded = json.decode(response.body);
+        if (decoded is List) {
+          final List<Compra> temp = [];
+          for (var item in decoded) {
+            try {
+              temp.add(Compra.fromJson(item));
+            } catch (e, st) {
+              debugPrint('Error parsing misCompras item: $e\n$st\nitem: $item');
+            }
+          }
+          _misCompras = temp;
+        } else {
+          _error = 'Respuesta inesperada del servidor.';
+          _misCompras = [];
+        }
         _error = null;
-        print('${_misCompras.length} mis compras cargadas');
+        debugPrint('${_misCompras.length} mis compras cargadas');
       } else {
         _error = 'Error al cargar mis compras: ${response.statusCode}';
         _misCompras = [];
       }
-    } catch (e) {
+    } catch (e, st) {
       _error = 'Error de conexión: $e';
       _misCompras = [];
-      print('Error cargando mis compras: $e');
+      debugPrint('Error cargando mis compras: $e\n$st');
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notifyAfterBuild();
     }
   }
 
@@ -93,18 +134,15 @@ class CompraProvider with ChangeNotifier {
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
-      final response = await _api.patch(
-        'compra/$compraId/evaluar',
-        _token!,
-        body: null,
-      );
+      final response =
+          await _api.patch('compra/$compraId/evaluar', _token!, body: null);
 
       if (response.statusCode == 200) {
         await fetchComprasPendientes();
-        print('Financiamiento evaluado para compra: $compraId');
+        debugPrint('Financiamiento evaluado para compra: $compraId');
         return true;
       } else {
         final data = json.decode(response.body);
@@ -116,45 +154,41 @@ class CompraProvider with ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notifyAfterBuild();
     }
   }
 
-  Future<bool> aprobarCompra(
-    String compraId,
-    AprobarCompraDto dto,
-  ) async {
+  Future<bool> aprobarCompra(String compraId, AprobarCompraDto dto) async {
     if (_token == null) return false;
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       final body = json.encode(dto.toJson());
-      final response = await _api.patch(
-        'compra/$compraId/aprobar',
-        _token!,
-        body: body,
-      );
+      final response =
+          await _api.patch('compra/$compraId/aprobar', _token!, body: body);
 
       if (response.statusCode == 200) {
         await fetchComprasPendientes();
-        print('Compra $compraId aprobada con estado: ${dto.status}');
+        debugPrint('Compra $compraId aprobada con estado: ${dto.status}');
         return true;
       } else {
         final data = json.decode(response.body);
-        final errorMessage = data['message'] ?? 'Error al aprobar compra';
+        final errorMessage = (data is Map && data['message'] != null)
+            ? data['message'] as String
+            : 'Error al aprobar compra';
 
-        if (errorMessage.contains('Stock insuficiente') ||
+        if (errorMessage.toLowerCase().contains('stock insuficiente') ||
             errorMessage.toLowerCase().contains('no hay suficiente stock') ||
             errorMessage.toLowerCase().contains('insufficient stock')) {
           _error =
               'No hay suficiente stock para completar esta compra. Por favor, verifica el inventario.';
-        } else if (errorMessage.contains('no disponible') ||
+        } else if (errorMessage.toLowerCase().contains('no disponible') ||
             errorMessage.toLowerCase().contains('not available')) {
           _error = 'El vehículo ya no está disponible para la venta.';
-        } else if (errorMessage.contains('no activo') ||
+        } else if (errorMessage.toLowerCase().contains('no activo') ||
             errorMessage.toLowerCase().contains('not active')) {
           _error = 'El vehículo ha sido desactivado y no puede venderse.';
         } else {
@@ -168,7 +202,7 @@ class CompraProvider with ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notifyAfterBuild();
     }
   }
 
@@ -193,12 +227,34 @@ class CompraProvider with ChangeNotifier {
 
   void clearError() {
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
   }
 
   void clearCompras() {
     _comprasPendientes = [];
     _misCompras = [];
-    notifyListeners();
+    _notifyAfterBuild();
+  }
+
+  void _notifyAfterBuild() {
+    try {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) {
+          try {
+            notifyListeners();
+          } catch (e) {
+            debugPrint('notifyListeners error: $e');
+          }
+        }
+      });
+    } catch (e) {
+      if (!_disposed) {
+        try {
+          notifyListeners();
+        } catch (err) {
+          debugPrint('notifyListeners fallback error: $err');
+        }
+      }
+    }
   }
 }

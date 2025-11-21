@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 import 'dart:async';
 import 'package:smartassistant_vendedor/models/user.dart';
 import 'package:smartassistant_vendedor/services/notification_service.dart'
@@ -23,7 +23,8 @@ class AuthProvider with ChangeNotifier {
   final ApiService _api = ApiService();
   final TwoFactorService _twoFactorService = TwoFactorService();
 
-  StreamSubscription? _uriLinkSubscription;
+  late final AppLinks _appLinks;
+  StreamSubscription<Uri>? _uriLinkSubscription;
 
   String? _token;
   ValidatedUser? _user;
@@ -38,20 +39,25 @@ class AuthProvider with ChangeNotifier {
 
   AuthProvider() {
     _tryLoadToken();
-    _initUniLinks();
+    _initAppLinks();
   }
 
-  void _initUniLinks() {
-    _uriLinkSubscription = uriLinkStream.listen((Uri? uri) {
+  void _initAppLinks() async {
+    _appLinks = AppLinks();
+
+    _uriLinkSubscription = _appLinks.uriLinkStream.listen((Uri uri) {
       _handleIncomingLink(uri);
     }, onError: (err) {
-      print('Error en uni_links: $err');
+      print('Error en app_links: $err');
     });
+
+    final initialUri = await _appLinks.getInitialLink();
+    if (initialUri != null) {
+      _handleIncomingLink(initialUri);
+    }
   }
 
-  void _handleIncomingLink(Uri? uri) async {
-    if (uri == null) return;
-
+  void _handleIncomingLink(Uri uri) async {
     print('URI recibida: $uri');
     print('Scheme: ${uri.scheme}');
     print('Host: ${uri.host}');
@@ -85,7 +91,7 @@ class AuthProvider with ChangeNotifier {
       final userId = uri.queryParameters['userId']!;
       _userIdFor2FA = userId;
       _authStatus = AuthStatus.twoFactorRequired;
-      notifyListeners();
+      _notifyAfterBuild();
       print('2FA requerido para usuario: $userId');
       return;
     }
@@ -105,7 +111,7 @@ class AuthProvider with ChangeNotifier {
       print('Error cargando token: $e');
       _authStatus = AuthStatus.unauthenticated;
     }
-    notifyListeners();
+    _notifyAfterBuild();
   }
 
   Future<void> _getProfile() async {
@@ -138,7 +144,7 @@ class AuthProvider with ChangeNotifier {
       await logout();
       rethrow;
     }
-    notifyListeners();
+    _notifyAfterBuild();
   }
 
   Future<void> _initNotifications() async {
@@ -158,7 +164,7 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> login(String email, String password) async {
     _authStatus = AuthStatus.authenticating;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       final response = await _api.postNoAuth(
@@ -174,6 +180,7 @@ class AuthProvider with ChangeNotifier {
         } else if (data.containsKey('userId')) {
           _userIdFor2FA = data['userId'];
           _authStatus = AuthStatus.twoFactorRequired;
+          _notifyAfterBuild();
           print('2FA requerido para usuario: $_userIdFor2FA');
         } else {
           throw Exception('Respuesta del servidor inesperada');
@@ -183,14 +190,14 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (e) {
       _authStatus = AuthStatus.unauthenticated;
-      notifyListeners();
+      _notifyAfterBuild();
       rethrow;
     }
   }
 
   Future<void> loginWithGoogle() async {
     _authStatus = AuthStatus.authenticating;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       const googleAuthUrl =
@@ -208,7 +215,7 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (e) {
       _authStatus = AuthStatus.unauthenticated;
-      notifyListeners();
+      _notifyAfterBuild();
       rethrow;
     }
   }
@@ -220,7 +227,7 @@ class AuthProvider with ChangeNotifier {
     String? telefono,
   }) async {
     _authStatus = AuthStatus.authenticating;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       final response = await _api.postNoAuth(
@@ -241,14 +248,14 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (e) {
       _authStatus = AuthStatus.unauthenticated;
-      notifyListeners();
+      _notifyAfterBuild();
       rethrow;
     }
   }
 
   Future<void> authenticate2FA(String userId, String code) async {
     _authStatus = AuthStatus.authenticating;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       final response = await _api.postNoAuth(
@@ -265,7 +272,7 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (e) {
       _authStatus = AuthStatus.twoFactorRequired;
-      notifyListeners();
+      _notifyAfterBuild();
       rethrow;
     }
   }
@@ -291,7 +298,7 @@ class AuthProvider with ChangeNotifier {
             twoFactorEnabled: false,
           );
         }
-        notifyListeners();
+        _notifyAfterBuild();
         return '2FA desactivado correctamente';
       }
     } catch (e) {
@@ -316,7 +323,7 @@ class AuthProvider with ChangeNotifier {
           twoFactorEnabled: true,
         );
       }
-      notifyListeners();
+      _notifyAfterBuild();
     } catch (e) {
       rethrow;
     }
@@ -335,7 +342,7 @@ class AuthProvider with ChangeNotifier {
     _authStatus = AuthStatus.unauthenticated;
     await _storage.delete(key: 'jwt_token');
     print('Sesión cerrada exitosamente');
-    notifyListeners();
+    _notifyAfterBuild();
   }
 
   Future<void> clearAuthData() async {
@@ -343,7 +350,13 @@ class AuthProvider with ChangeNotifier {
     _token = null;
     _user = null;
     _authStatus = AuthStatus.unauthenticated;
-    notifyListeners();
+    _notifyAfterBuild();
+  }
+
+  void _notifyAfterBuild() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 
   @override

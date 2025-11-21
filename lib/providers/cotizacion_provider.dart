@@ -34,7 +34,7 @@ class CotizacionProvider with ChangeNotifier {
       }
 
       _isLoading = true;
-      notifyListeners();
+      _notifyAfterBuild();
 
       final response = await _api.get('cotizacion/pendientes', _token!);
 
@@ -53,7 +53,7 @@ class CotizacionProvider with ChangeNotifier {
       print('Error cargando cotizaciones: $e');
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notifyAfterBuild();
     }
   }
 
@@ -86,7 +86,7 @@ class CotizacionProvider with ChangeNotifier {
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       final body = json.encode({'status': status});
@@ -110,7 +110,7 @@ class CotizacionProvider with ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notifyAfterBuild();
     }
   }
 
@@ -124,7 +124,7 @@ class CotizacionProvider with ChangeNotifier {
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
 
     try {
       final body = json.encode({
@@ -153,7 +153,7 @@ class CotizacionProvider with ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notifyAfterBuild();
     }
   }
 
@@ -167,11 +167,17 @@ class CotizacionProvider with ChangeNotifier {
 
   void clearError() {
     _error = null;
-    notifyListeners();
+    _notifyAfterBuild();
   }
 
   void clearCotizaciones() {
     _cotizaciones = [];
-    notifyListeners();
+    _notifyAfterBuild();
+  }
+
+  void _notifyAfterBuild() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 }
