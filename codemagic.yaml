@@ -1,0 +1,36 @@
+workflows:
+  smartassistant-android-beta:
+    name: SmartAssistant Android Beta
+    environment:
+      groups:
+        - android_credentials
+      flutter: stable
+      vars:
+        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+        _JAVA_OPTIONS: "-Xmx4g"
+    
+    scripts:
+      - name: Setup Java memory
+        script: |
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" > android/gradle.properties
+      
+      - name: Get dependencies
+        script: flutter pub get
+      
+      - name: Build Android APK
+        script: |
+          cd android
+          ./gradlew clean
+          cd ..
+          flutter build apk --release
+    
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+    
+    publishing:
+      email:
+        recipients:
+          - miltonpinamoreno@email.com 
+        notify:
+          success: true
+          failure: true
