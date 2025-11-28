@@ -1,27 +1,36 @@
 workflows:
-  smartassistant-android-only:
-    name: SmartAssistant Android Only
+  smartassistant-android-fixed:
+    name: SmartAssistant Android Fixed
     environment:
       groups:
         - android_credentials
       flutter: stable
       vars:
-        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g"
+        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+        _JAVA_OPTIONS: "-Xmx4g"
     
     scripts:
-      - name: Setup Android build
+      - name: Setup Java memory
         script: |
-          echo "=== BUILDING ANDROID ONLY ==="
+          echo "=== CONFIGURANDO MEMORIA JAVA ==="
+          # Crear archivo de propiedades para Gradle
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" > android/gradle.properties
+          echo "android.enableJetifier=false" >> android/gradle.properties
+      
+      - name: Clean and get dependencies
+        script: |
           flutter clean
           flutter pub get
       
-      - name: Build Android APK
+      - name: Build Android Release APK
         script: |
-          flutter build apk --release
+          echo "=== BUILDING RELEASE APK ==="
+          flutter build apk --release --verbose
       
       - name: Build Android App Bundle
         script: |
-          flutter build appbundle --release
+          echo "=== BUILDING APP BUNDLE ==="
+          flutter build appbundle --release --verbose
     
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
