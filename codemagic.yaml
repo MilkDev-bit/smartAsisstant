@@ -1,70 +1,36 @@
 workflows:
-  smartassistant-ios-fixed:
-    name: SmartAssistant iOS Fixed
+  smartassistant-android-only:
+    name: SmartAssistant Android Only
     environment:
       groups:
-        - ios_credentials
+        - android_credentials
       flutter: stable
-      xcode: latest
-      cocoapods: default
+      vars:
+        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g"
     
     scripts:
-      - name: Force iOS 15.0+ for Firebase
+      - name: Setup Android build
         script: |
-          echo "=== FORCING iOS 15.0+ ==="
-          
-          # ✅ ELIMINAR y RECREAR Podfile completamente
-          cd ios
-          rm -f Podfile Podfile.lock
-          
-          # Crear nuevo Podfile con platform 15.0
-          cat > Podfile << EOF
-          # GENERATED FOR FIREBASE COMPATIBILITY
-          platform :ios, '15.0'
-          install! 'cocoapods', :deterministic_uuids => false
-          
-          target 'Runner' do
-            use_frameworks!
-            use_modular_headers!
-            
-            flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-          end
-          
-          post_install do |installer|
-            installer.pods_project.targets.each do |target|
-              flutter_additional_ios_build_settings(target)
-            end
-          end
-          EOF
-          
-          echo "✅ New Podfile created with iOS 15.0"
-          cat Podfile
-          cd ..
-      
-      - name: Clean and get dependencies
-        script: |
+          echo "=== BUILDING ANDROID ONLY ==="
           flutter clean
           flutter pub get
       
-      - name: Pod install with force update
+      - name: Build Android APK
         script: |
-          cd ios
-          pod cache clean --all
-          pod repo update
-          pod install --repo-update --verbose
-          cd ..
+          flutter build apk --release
       
-      - name: Build iOS
+      - name: Build Android App Bundle
         script: |
-          flutter build ipa --release --no-codesign
+          flutter build appbundle --release
     
     artifacts:
-      - build/ios/ipa/*.ipa
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/**/*.aab
     
     publishing:
       email:
         recipients:
-          - miltonpinamoreno@email.com
+          - miltonpinamoreno@gmail.com
         notify:
           success: true
           failure: true
