@@ -7,6 +7,8 @@ import 'package:smartassistant_vendedor/screens/compras_pendientes_screen.dart';
 import 'package:smartassistant_vendedor/providers/auth_provider.dart';
 import 'package:smartassistant_vendedor/providers/compra_provider.dart';
 import 'package:smartassistant_vendedor/widgets/vin_scanner_button.dart';
+import 'package:smartassistant_vendedor/screens/chatbot_screen.dart';
+import 'package:smartassistant_vendedor/screens/ia_splash_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return 'Cotizaciones Pendientes';
       case 1:
-        return 'Compras Pendientes';
+        return 'Compras';
       case 2:
         return 'Mis Tareas';
       case 3:
@@ -144,6 +146,38 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+      floatingActionButton: _selectedIndex != 2
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => FuturisticIaSplash(
+                      message: 'Conectando con IA',
+                      onAnimationComplete: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => const ChatbotScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+              backgroundColor: Theme.of(context).primaryColorLight,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Image.asset(
+                  'assets/images/IAL.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.auto_awesome, color: Colors.white);
+                  },
+                ),
+              ),
+              tooltip: 'SMARTASSISTANT',
+            )
+          : null,
     );
   }
 }
@@ -715,7 +749,6 @@ class ProfileTab extends StatelessWidget {
             onPressed: () async {
               Navigator.of(ctx).pop();
 
-              // Mostrar diálogo de carga
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -737,18 +770,14 @@ class ProfileTab extends StatelessWidget {
               );
 
               try {
-                // ✅ Ahora recibe el mensaje de éxito
                 final message = await authProvider.toggle2FA(true);
 
-                // Cerrar diálogo de carga
                 if (context.mounted) Navigator.of(context).pop();
 
-                // Mostrar diálogo de verificación de código
                 if (context.mounted) {
                   _showVerify2FACodeDialog(context, authProvider, message);
                 }
               } catch (e) {
-                // Cerrar diálogo de carga
                 if (context.mounted) Navigator.of(context).pop();
 
                 if (context.mounted) {

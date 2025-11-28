@@ -5,9 +5,32 @@ import 'package:smartassistant_vendedor/models/cotizacion.dart';
 import 'package:smartassistant_vendedor/providers/cotizacion_provider.dart';
 import 'package:smartassistant_vendedor/widgets/contact_buttons.dart';
 
-class CotizacionDetailScreen extends StatelessWidget {
+class CotizacionDetailScreen extends StatefulWidget {
   final Cotizacion cotizacion;
   const CotizacionDetailScreen({super.key, required this.cotizacion});
+
+  @override
+  State<CotizacionDetailScreen> createState() => _CotizacionDetailScreenState();
+}
+
+class _CotizacionDetailScreenState extends State<CotizacionDetailScreen> {
+  late TextEditingController _notasController;
+  bool _isEditingNotas = false;
+  bool _isSavingNotas = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _notasController = TextEditingController(
+      text: widget.cotizacion.notasVendedor ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _notasController.dispose();
+    super.dispose();
+  }
 
   void _updateStatus(BuildContext context, String status) async {
     final provider = Provider.of<CotizacionProvider>(context, listen: false);
@@ -47,7 +70,7 @@ class CotizacionDetailScreen extends StatelessWidget {
     if (!confirm) return;
 
     final bool success =
-        await provider.updateCotizacionStatus(cotizacion.id, status);
+        await provider.updateCotizacionStatus(widget.cotizacion.id, status);
 
     if (success && context.mounted) {
       navigator.pop();
@@ -65,6 +88,40 @@ class CotizacionDetailScreen extends StatelessWidget {
         SnackBar(
           content: Text('Error: ${provider.error}'),
           backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
+  }
+
+  Future<void> _saveNotas() async {
+    setState(() {
+      _isSavingNotas = true;
+    });
+
+    final provider = Provider.of<CotizacionProvider>(context, listen: false);
+    final success = await provider.updateNotasVendedor(
+      widget.cotizacion.id,
+      _notasController.text,
+    );
+
+    setState(() {
+      _isSavingNotas = false;
+      if (success) {
+        _isEditingNotas = false;
+      }
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success ? 'Notas guardadas exitosamente' : 'Error al guardar notas',
+          ),
+          backgroundColor:
+              success ? Colors.green.shade600 : Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -102,6 +159,150 @@ class CotizacionDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotasCard() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Notas del Vendedor',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1F2E),
+                  ),
+                ),
+                if (!_isEditingNotas)
+                  IconButton(
+                    icon: Icon(
+                      Icons.edit_outlined,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isEditingNotas = true;
+                      });
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_isEditingNotas)
+              Column(
+                children: [
+                  TextField(
+                    controller: _notasController,
+                    maxLines: 5,
+                    decoration: InputDecoration(
+                      hintText: 'Escribe notas sobre el cliente...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).primaryColor,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _isSavingNotas
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _isEditingNotas = false;
+                                    _notasController.text =
+                                        widget.cotizacion.notasVendedor ?? '';
+                                  });
+                                },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Cancelar'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isSavingNotas ? null : _saveNotas,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: _isSavingNotas
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                )
+                              : const Text('Guardar'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            else
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _notasController.text.isEmpty
+                      ? 'Sin notas agregadas'
+                      : _notasController.text,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _notasController.text.isEmpty
+                        ? Colors.grey[500]
+                        : Colors.black87,
+                    fontStyle: _notasController.text.isEmpty
+                        ? FontStyle.italic
+                        : FontStyle.normal,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -212,15 +413,15 @@ class CotizacionDetailScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                _getStatusColor(cotizacion.status)
+                                _getStatusColor(widget.cotizacion.status)
                                     .withOpacity(0.15),
-                                _getStatusColor(cotizacion.status)
+                                _getStatusColor(widget.cotizacion.status)
                                     .withOpacity(0.05),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: _getStatusColor(cotizacion.status)
+                              color: _getStatusColor(widget.cotizacion.status)
                                   .withOpacity(0.3),
                             ),
                           ),
@@ -234,8 +435,9 @@ class CotizacionDetailScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Icon(
-                                  _getStatusIcon(cotizacion.status),
-                                  color: _getStatusColor(cotizacion.status),
+                                  _getStatusIcon(widget.cotizacion.status),
+                                  color:
+                                      _getStatusColor(widget.cotizacion.status),
                                   size: 26,
                                 ),
                               ),
@@ -245,20 +447,21 @@ class CotizacionDetailScreen extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      cotizacion.status,
+                                      widget.cotizacion.status,
                                       style: TextStyle(
-                                        color:
-                                            _getStatusColor(cotizacion.status),
+                                        color: _getStatusColor(
+                                            widget.cotizacion.status),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 18,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      _getStatusDescription(cotizacion.status),
+                                      _getStatusDescription(
+                                          widget.cotizacion.status),
                                       style: TextStyle(
-                                        color:
-                                            _getStatusColor(cotizacion.status),
+                                        color: _getStatusColor(
+                                            widget.cotizacion.status),
                                         fontSize: 13,
                                       ),
                                     ),
@@ -269,6 +472,10 @@ class CotizacionDetailScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 24),
+
+                        // Notas del vendedor
+                        _buildNotasCard(),
+
                         _buildInfoCard('Información del Cliente', [
                           Container(
                             padding: const EdgeInsets.all(14),
@@ -296,7 +503,7 @@ class CotizacionDetailScreen extends StatelessWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        cotizacion.cliente.nombre,
+                                        widget.cotizacion.cliente.nombre,
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
@@ -304,7 +511,7 @@ class CotizacionDetailScreen extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        cotizacion.cliente.email,
+                                        widget.cotizacion.cliente.email,
                                         style: TextStyle(
                                           color: Colors.grey[600],
                                           fontSize: 13,
@@ -316,8 +523,9 @@ class CotizacionDetailScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                          if (cotizacion.cliente.telefono != null &&
-                              cotizacion.cliente.telefono!.isNotEmpty) ...[
+                          if (widget.cotizacion.cliente.telefono != null &&
+                              widget
+                                  .cotizacion.cliente.telefono!.isNotEmpty) ...[
                             const SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.all(14),
@@ -331,7 +539,7 @@ class CotizacionDetailScreen extends StatelessWidget {
                                       color: Colors.grey[600], size: 20),
                                   const SizedBox(width: 12),
                                   Text(
-                                    cotizacion.cliente.telefono!,
+                                    widget.cotizacion.cliente.telefono!,
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w500,
@@ -343,13 +551,13 @@ class CotizacionDetailScreen extends StatelessWidget {
                           ],
                           const SizedBox(height: 16),
                           ContactButtons(
-                            telefono: cotizacion.cliente.telefono,
-                            email: cotizacion.cliente.email,
+                            telefono: widget.cotizacion.cliente.telefono,
+                            email: widget.cotizacion.cliente.email,
                           ),
                         ]),
                         _buildInfoCard('Vehículo', [
                           Text(
-                            cotizacion.coche.nombreCompleto,
+                            widget.cotizacion.coche.nombreCompleto,
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -357,40 +565,47 @@ class CotizacionDetailScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          _buildDetailRow('VIN', cotizacion.coche.vin),
-                          _buildDetailRow('Marca', cotizacion.coche.marca),
-                          _buildDetailRow('Modelo', cotizacion.coche.modelo),
+                          _buildDetailRow('VIN', widget.cotizacion.coche.vin),
                           _buildDetailRow(
-                              'Año', cotizacion.coche.ano.toString()),
+                              'Marca', widget.cotizacion.coche.marca),
                           _buildDetailRow(
-                              'Condición', cotizacion.coche.condicion),
+                              'Modelo', widget.cotizacion.coche.modelo),
+                          _buildDetailRow(
+                              'Año', widget.cotizacion.coche.ano.toString()),
+                          _buildDetailRow(
+                              'Condición', widget.cotizacion.coche.condicion),
                           _buildDetailRow(
                             'Kilometraje',
-                            '${numberFormatter.format(cotizacion.coche.kilometraje)} km',
+                            '${numberFormatter.format(widget.cotizacion.coche.kilometraje)} km',
                           ),
+                          _buildDetailRow('Transmisión',
+                              widget.cotizacion.coche.transmision),
                           _buildDetailRow(
-                              'Transmisión', cotizacion.coche.transmision),
-                          _buildDetailRow('Motor', cotizacion.coche.motor),
-                          _buildDetailRow('Color', cotizacion.coche.color),
+                              'Motor', widget.cotizacion.coche.motor),
+                          _buildDetailRow(
+                              'Color', widget.cotizacion.coche.color),
                         ]),
                         _buildInfoCard('Detalles Financieros', [
                           _buildDetailRow(
                             'Precio del vehículo',
-                            currencyFormatter.format(cotizacion.precioCoche),
+                            currencyFormatter
+                                .format(widget.cotizacion.precioCoche),
                           ),
                           _buildDetailRow(
                             'Enganche',
-                            currencyFormatter.format(cotizacion.enganche),
+                            currencyFormatter
+                                .format(widget.cotizacion.enganche),
                           ),
                           _buildDetailRow(
                             'Monto a financiar',
                             currencyFormatter.format(
-                                cotizacion.precioCoche - cotizacion.enganche),
+                                widget.cotizacion.precioCoche -
+                                    widget.cotizacion.enganche),
                           ),
                           const Divider(height: 28),
                           _buildDetailRow(
                             'Plazo',
-                            '${cotizacion.plazoMeses} meses',
+                            '${widget.cotizacion.plazoMeses} meses',
                           ),
                           _buildDetailRow(
                             'Tasa de interés anual',
@@ -422,7 +637,7 @@ class CotizacionDetailScreen extends StatelessWidget {
                                 ),
                                 Text(
                                   currencyFormatter
-                                      .format(cotizacion.pagoMensual),
+                                      .format(widget.cotizacion.pagoMensual),
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -435,11 +650,12 @@ class CotizacionDetailScreen extends StatelessWidget {
                           const Divider(height: 28),
                           _buildDetailRow(
                             'Total a pagar',
-                            currencyFormatter.format(cotizacion.totalPagado),
+                            currencyFormatter
+                                .format(widget.cotizacion.totalPagado),
                             isBold: true,
                           ),
                         ]),
-                        if (cotizacion.status == 'Pendiente') ...[
+                        if (widget.cotizacion.status == 'Pendiente') ...[
                           const SizedBox(height: 8),
                           const Text(
                             'Acciones',

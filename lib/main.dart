@@ -7,7 +7,11 @@ import 'package:smartassistant_vendedor/providers/task_provider.dart';
 import 'package:smartassistant_vendedor/providers/user_provider.dart';
 import 'package:smartassistant_vendedor/providers/compra_provider.dart';
 import 'package:smartassistant_vendedor/screens/auth_wrapper.dart';
+import 'package:smartassistant_vendedor/providers/chat_provider.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:smartassistant_vendedor/screens/reset_password_screen.dart';
+import 'package:smartassistant_vendedor/screens/enter_token_screen.dart';
+import 'package:smartassistant_vendedor/services/deep_link_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -69,14 +73,38 @@ void main() {
           ),
           update: (context, auth, previous) => UserProvider(auth),
         ),
+        ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
+          create: (context) => ChatProvider(
+            Provider.of<AuthProvider>(context, listen: false),
+          ),
+          update: (context, auth, previous) => ChatProvider(auth),
+        ),
       ],
       child: const MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  void _initDeepLinks() async {
+    // Inicializar deep links después de que el widget esté montado
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      DeepLinkService.initDeepLinks(navigatorKey.currentContext!);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +155,15 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const AuthWrapper(),
+      routes: {
+        '/reset-password': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments
+              as Map<String, dynamic>?;
+          final token = args?['token'] ?? '';
+          return ResetPasswordScreen(token: token);
+        },
+        '/enter-token': (context) => const EnterTokenScreen(),
+      },
       debugShowCheckedModeBanner: false,
     );
   }

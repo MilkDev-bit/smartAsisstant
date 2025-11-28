@@ -8,13 +8,13 @@ class CompraProvider with ChangeNotifier {
   final AuthProvider _authProvider;
   final ApiService _api = ApiService();
 
-  List<Compra> _comprasPendientes = [];
+  List<Compra> _compras = [];
   List<Compra> _misCompras = [];
   bool _isLoading = false;
   String? _error;
   bool _disposed = false;
 
-  List<Compra> get comprasPendientes => _comprasPendientes;
+  List<Compra> get compras => _compras;
   List<Compra> get misCompras => _misCompras;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -29,7 +29,7 @@ class CompraProvider with ChangeNotifier {
 
   String? get _token => _authProvider.token;
 
-  Future<void> fetchComprasPendientes() async {
+  Future<void> _loadCompras(String status) async {
     if (!_authProvider.isAuthenticated || _token == null) {
       _error = 'No autenticado';
       _notifyAfterBuild();
@@ -41,7 +41,22 @@ class CompraProvider with ChangeNotifier {
     _notifyAfterBuild();
 
     try {
-      final response = await _api.get('compra/pendientes', _token!);
+      String endpoint;
+      switch (status) {
+        case 'Pendiente':
+          endpoint = 'compra/pendientes';
+          break;
+        case 'En revisión':
+          endpoint = 'compra/en-revision';
+          break;
+        case 'Aprobada':
+          endpoint = 'compra/aprobadas';
+          break;
+        default:
+          endpoint = 'compra/pendientes';
+      }
+
+      final response = await _api.get(endpoint, _token!);
 
       if (response.statusCode == 200) {
         final dynamic decoded = json.decode(response.body);
@@ -61,26 +76,38 @@ class CompraProvider with ChangeNotifier {
               debugPrint('Error parsing compra item: $e\n$st\nitem: $item');
             }
           }
-          _comprasPendientes = temp;
+          _compras = temp;
         } else {
           _error = 'Respuesta inesperada del servidor.';
-          _comprasPendientes = [];
+          _compras = [];
         }
 
         _error = null;
-        debugPrint('${_comprasPendientes.length} compras pendientes cargadas');
+        debugPrint('${_compras.length} compras con estado $status cargadas');
       } else {
-        _error = 'Error al cargar compras pendientes: ${response.statusCode}';
-        _comprasPendientes = [];
+        _error = 'Error al cargar compras: ${response.statusCode}';
+        _compras = [];
       }
     } catch (e, st) {
       _error = 'Error de conexión: $e';
-      _comprasPendientes = [];
-      debugPrint('Error cargando compras pendientes: $e\n$st');
+      _compras = [];
+      debugPrint('Error cargando compras: $e\n$st');
     } finally {
       _isLoading = false;
       _notifyAfterBuild();
     }
+  }
+
+  Future<void> fetchComprasPendientes() async {
+    await _loadCompras('Pendiente');
+  }
+
+  Future<void> fetchComprasEnRevision() async {
+    await _loadCompras('En revisión');
+  }
+
+  Future<void> fetchComprasAprobadas() async {
+    await _loadCompras('Aprobada');
   }
 
   Future<void> fetchMisCompras() async {
@@ -141,7 +168,6 @@ class CompraProvider with ChangeNotifier {
           await _api.patch('compra/$compraId/evaluar', _token!, body: null);
 
       if (response.statusCode == 200) {
-        await fetchComprasPendientes();
         debugPrint('Financiamiento evaluado para compra: $compraId');
         return true;
       } else {
@@ -171,7 +197,6 @@ class CompraProvider with ChangeNotifier {
           await _api.patch('compra/$compraId/aprobar', _token!, body: body);
 
       if (response.statusCode == 200) {
-        await fetchComprasPendientes();
         debugPrint('Compra $compraId aprobada con estado: ${dto.status}');
         return true;
       } else {
@@ -231,7 +256,7 @@ class CompraProvider with ChangeNotifier {
   }
 
   void clearCompras() {
-    _comprasPendientes = [];
+    _compras = [];
     _misCompras = [];
     _notifyAfterBuild();
   }

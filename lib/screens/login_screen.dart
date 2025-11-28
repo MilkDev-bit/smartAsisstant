@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:smartassistant_vendedor/providers/auth_provider.dart';
 import 'package:smartassistant_vendedor/screens/register_screen.dart';
 import 'package:smartassistant_vendedor/screens/forgot_password_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:smartassistant_vendedor/screens/enter_token_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -72,7 +72,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       body: Container(
@@ -176,6 +175,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 48),
+
+                  // FORMULARIO
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -198,21 +199,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: const TextStyle(fontSize: 15),
                             decoration: InputDecoration(
                               labelText: 'Email',
-                              prefixIcon: Icon(Icons.email_outlined,
-                                  color: Theme.of(context).primaryColor),
+                              prefixIcon: Icon(
+                                Icons.email_outlined,
+                                color: Theme.of(context).primaryColor,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                    color: Theme.of(context).primaryColor,
-                                    width: 2),
                               ),
                               filled: true,
                               fillColor: Colors.grey.shade50,
@@ -229,13 +221,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                           ),
                           const SizedBox(height: 16),
+
                           TextFormField(
                             controller: _passwordController,
                             style: const TextStyle(fontSize: 15),
                             decoration: InputDecoration(
                               labelText: 'Contraseña',
-                              prefixIcon: Icon(Icons.lock_outline,
-                                  color: Theme.of(context).primaryColor),
+                              prefixIcon: Icon(
+                                Icons.lock_outline,
+                                color: Theme.of(context).primaryColor,
+                              ),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword
@@ -252,17 +247,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                    color: Theme.of(context).primaryColor,
-                                    width: 2),
-                              ),
                               filled: true,
                               fillColor: Colors.grey.shade50,
                             ),
@@ -271,7 +255,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ? 'Por favor ingrese su contraseña'
                                 : null,
                           ),
+
                           const SizedBox(height: 12),
+
+                          // ¿OLVIDASTE TU CONTRASEÑA?
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
@@ -285,7 +272,33 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
+
+                          // 🔵 NUEVO BOTÓN: INGRESAR TOKEN MANUAL
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const EnterTokenScreen(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                '¿Tienes un token? Ingrésalo aquí',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+
                           const SizedBox(height: 24),
+
+                          // BOTÓN LOGIN
                           authProvider.authStatus == AuthStatus.authenticating
                               ? const CircularProgressIndicator()
                               : Container(
@@ -325,12 +338,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        letterSpacing: 0.5,
                                       ),
                                     ),
                                   ),
                                 ),
+
                           const SizedBox(height: 16),
+
+                          // DIVIDER
                           Row(
                             children: [
                               Expanded(
@@ -350,7 +365,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Divider(color: Colors.grey.shade400)),
                             ],
                           ),
+
                           const SizedBox(height: 16),
+
+                          // BOTÓN GOOGLE
                           Container(
                             width: double.infinity,
                             height: 54,
@@ -377,27 +395,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Container(
+                                  SizedBox(
                                     width: 24,
                                     height: 24,
                                     child: Image.asset(
                                       'assets/images/google_logo.png',
                                       fit: BoxFit.contain,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                        return Image.network(
-                                          'https://developers.google.com/identity/images/g-logo.png',
-                                          fit: BoxFit.contain,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            return const Icon(
-                                              Icons.account_circle,
-                                              size: 24,
-                                              color: Colors.grey,
-                                            );
-                                          },
-                                        );
-                                      },
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -417,7 +420,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 24),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -443,6 +448,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 20),
                 ],
               ),

@@ -15,6 +15,7 @@ class CotizacionesTab extends StatefulWidget {
 
 class _CotizacionesTabState extends State<CotizacionesTab> {
   late Future<void> _cotizacionesFuture;
+  bool _showPendientes = true; // true = pendientes, false = aprobadas
 
   @override
   void initState() {
@@ -31,13 +32,109 @@ class _CotizacionesTabState extends State<CotizacionesTab> {
 
   Future<void> _loadCotizaciones() async {
     final provider = Provider.of<CotizacionProvider>(context, listen: false);
-    await provider.fetchCotizacionesPendientes();
+    if (_showPendientes) {
+      await provider.fetchCotizacionesPendientes();
+    } else {
+      await provider.fetchCotizacionesAprobadas();
+    }
   }
 
   Future<void> _refreshCotizaciones() async {
     setState(() {
       _cotizacionesFuture = _loadCotizaciones();
     });
+  }
+
+  void _toggleFilter() {
+    setState(() {
+      _showPendientes = !_showPendientes;
+      _cotizacionesFuture = _loadCotizaciones();
+    });
+  }
+
+  Widget _buildFilterToggle() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildFilterButton(
+              'Pendientes',
+              Icons.pending_outlined,
+              _showPendientes,
+              Colors.orange,
+            ),
+          ),
+          Expanded(
+            child: _buildFilterButton(
+              'Aprobadas',
+              Icons.check_circle_outline,
+              !_showPendientes,
+              Colors.green,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterButton(
+      String label, IconData icon, bool isSelected, Color color) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: isSelected ? null : _toggleFilter,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          margin: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isSelected ? color : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: isSelected ? Colors.white : Colors.grey.shade600,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey.shade600,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildEmptyState() {
@@ -61,16 +158,20 @@ class _CotizacionesTabState extends State<CotizacionesTab> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'No hay cotizaciones pendientes',
-              style: TextStyle(
+            Text(
+              _showPendientes
+                  ? 'No hay cotizaciones pendientes'
+                  : 'No hay cotizaciones aprobadas',
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Las nuevas cotizaciones de clientes\naparecerán aquí automáticamente',
+              _showPendientes
+                  ? 'Las nuevas cotizaciones de clientes\naparecerán aquí automáticamente'
+                  : 'Las cotizaciones aprobadas\naparecerán aquí',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey[600],
@@ -499,39 +600,46 @@ class _CotizacionesTabState extends State<CotizacionesTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder(
-        future: _cotizacionesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return _buildLoadingState();
-          }
+      body: Column(
+        children: [
+          _buildFilterToggle(),
+          Expanded(
+            child: FutureBuilder(
+              future: _cotizacionesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return _buildLoadingState();
+                }
 
-          return Consumer<CotizacionProvider>(
-            builder: (context, provider, child) {
-              if (provider.isLoading) {
-                return _buildLoadingState();
-              }
+                return Consumer<CotizacionProvider>(
+                  builder: (context, provider, child) {
+                    if (provider.isLoading) {
+                      return _buildLoadingState();
+                    }
 
-              if (provider.error != null) {
-                return _buildErrorState(provider.error!);
-              }
+                    if (provider.error != null) {
+                      return _buildErrorState(provider.error!);
+                    }
 
-              if (provider.cotizaciones.isEmpty) {
-                return _buildEmptyState();
-              }
+                    if (provider.cotizaciones.isEmpty) {
+                      return _buildEmptyState();
+                    }
 
-              return RefreshIndicator(
-                onRefresh: _refreshCotizaciones,
-                child: ListView.builder(
-                  padding: const EdgeInsets.only(top: 20, bottom: 20),
-                  itemCount: provider.cotizaciones.length,
-                  itemBuilder: (context, index) => _buildCotizacionCard(
-                      context, provider.cotizaciones[index]),
-                ),
-              );
-            },
-          );
-        },
+                    return RefreshIndicator(
+                      onRefresh: _refreshCotizaciones,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(top: 8, bottom: 20),
+                        itemCount: provider.cotizaciones.length,
+                        itemBuilder: (context, index) => _buildCotizacionCard(
+                            context, provider.cotizaciones[index]),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -26,7 +26,7 @@ class CotizacionProvider with ChangeNotifier {
 
   String? get _token => _authProvider.token;
 
-  Future<void> _loadCotizaciones() async {
+  Future<void> _loadCotizaciones(String status) async {
     try {
       if (!_authProvider.isAuthenticated || _token == null) {
         print('Usuario no autenticado para cargar cotizaciones');
@@ -36,13 +36,18 @@ class CotizacionProvider with ChangeNotifier {
       _isLoading = true;
       _notifyAfterBuild();
 
-      final response = await _api.get('cotizacion/pendientes', _token!);
+      // Cambiar el endpoint según el status
+      final endpoint = status == 'Pendiente'
+          ? 'cotizacion/pendientes'
+          : 'cotizacion/aprobadas';
+
+      final response = await _api.get(endpoint, _token!);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         _cotizaciones = data.map((json) => Cotizacion.fromJson(json)).toList();
         _error = null;
-        print('${_cotizaciones.length} cotizaciones cargadas');
+        print('${_cotizaciones.length} cotizaciones $status cargadas');
       } else {
         _error = 'Error al cargar cotizaciones: ${response.statusCode}';
         _cotizaciones = [];
@@ -73,11 +78,15 @@ class CotizacionProvider with ChangeNotifier {
   }
 
   Future<void> fetchCotizacionesPendientes() async {
-    await _loadCotizaciones();
+    await _loadCotizaciones('Pendiente');
+  }
+
+  Future<void> fetchCotizacionesAprobadas() async {
+    await _loadCotizaciones('Aprobada');
   }
 
   Future<void> loadCotizaciones() async {
-    await _loadCotizaciones();
+    await _loadCotizaciones('Pendiente');
   }
 
   Future<bool> updateCotizacionStatus(
@@ -179,5 +188,37 @@ class CotizacionProvider with ChangeNotifier {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       notifyListeners();
     });
+  }
+
+  Future<bool> updateNotasVendedor(String cotizacionId, String notas) async {
+    if (_token == null) return false;
+
+    _isLoading = true;
+    _error = null;
+    _notifyAfterBuild();
+
+    try {
+      final body = json.encode({'notasVendedor': notas});
+      final response = await _api.patch(
+        'cotizacion/$cotizacionId/notas',
+        _token!,
+        body: body,
+      );
+
+      if (response.statusCode == 200) {
+        print('Notas actualizadas para cotización: $cotizacionId');
+        return true;
+      } else {
+        final data = json.decode(response.body);
+        _error = data['message'] ?? 'Error al actualizar las notas';
+        return false;
+      }
+    } catch (e) {
+      _error = 'Error de conexión: $e';
+      return false;
+    } finally {
+      _isLoading = false;
+      _notifyAfterBuild();
+    }
   }
 }

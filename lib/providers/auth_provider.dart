@@ -9,13 +9,15 @@ import 'package:smartassistant_vendedor/services/notification_service.dart'
     as notification_service;
 import 'package:smartassistant_vendedor/services/api_service.dart';
 import 'package:smartassistant_vendedor/services/two_factor_service.dart';
+import 'package:smartassistant_vendedor/main.dart';
 
 enum AuthStatus {
   uninitialized,
   authenticated,
   authenticating,
   unauthenticated,
-  twoFactorRequired
+  twoFactorRequired,
+  registrationSuccess
 }
 
 class AuthProvider with ChangeNotifier {
@@ -31,10 +33,13 @@ class AuthProvider with ChangeNotifier {
   AuthStatus _authStatus = AuthStatus.uninitialized;
   String? _userIdFor2FA;
 
+  String? _registrationSuccessMessage;
+
   String? get token => _token;
   ValidatedUser? get user => _user;
   AuthStatus get authStatus => _authStatus;
   String? get userIdFor2FA => _userIdFor2FA;
+  String? get registrationSuccessMessage => _registrationSuccessMessage;
   bool get isAuthenticated => _authStatus == AuthStatus.authenticated;
 
   AuthProvider() {
@@ -64,6 +69,11 @@ class AuthProvider with ChangeNotifier {
     print('Path: ${uri.path}');
     print('Query params: ${uri.queryParameters}');
 
+    if (uri.scheme == 'smartassistant' && uri.host == 'reset-password') {
+      await _handlePasswordReset(uri);
+      return;
+    }
+
     if (uri.scheme == 'smartassistant' && uri.host == 'login-success') {
       await _processDeepLink(uri);
       return;
@@ -75,6 +85,24 @@ class AuthProvider with ChangeNotifier {
     }
 
     print('URI no manejada: $uri');
+  }
+
+  Future<void> _handlePasswordReset(Uri uri) async {
+    print('Manejando reset de contraseña: $uri');
+
+    final token = uri.queryParameters['token'];
+    if (token != null) {
+      print('Token de reset recibido: $token');
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        navigatorKey.currentState?.pushReplacementNamed(
+          '/reset-password',
+          arguments: {'token': token},
+        );
+      });
+    } else {
+      print('No se encontró token en el enlace de reset');
+    }
   }
 
   Future<void> _processDeepLink(Uri uri) async {
@@ -227,11 +255,14 @@ class AuthProvider with ChangeNotifier {
     String? telefono,
   }) async {
     _authStatus = AuthStatus.authenticating;
+    _registrationSuccessMessage = null;
     _notifyAfterBuild();
 
     try {
+      print('Iniciando registro para: $email');
+
       final response = await _api.postNoAuth(
-        'auth/register',
+        'auth/register/vendedor',
         json.encode({
           'nombre': nombre,
           'email': email,
@@ -240,7 +271,17 @@ class AuthProvider with ChangeNotifier {
         }),
       );
 
+      print('Respuesta del registro - Status: ${response.statusCode}');
+      print('Respuesta del registro - Body: ${response.body}');
+
       if (response.statusCode == 201) {
+        _registrationSuccessMessage =
+            'Registro exitoso. Tu cuenta ha sido creada y será verificada por un administrador.';
+        _authStatus = AuthStatus.registrationSuccess;
+        _notifyAfterBuild();
+
+        print('Registro completado exitosamente para: $email');
+
         await login(email, password);
       } else {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -248,6 +289,7 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (e) {
       _authStatus = AuthStatus.unauthenticated;
+      _registrationSuccessMessage = null;
       _notifyAfterBuild();
       rethrow;
     }
@@ -335,10 +377,16 @@ class AuthProvider with ChangeNotifier {
     await _getProfile();
   }
 
+  void clearRegistrationMessage() {
+    _registrationSuccessMessage = null;
+    _notifyAfterBuild();
+  }
+
   Future<void> logout() async {
     _token = null;
     _user = null;
     _userIdFor2FA = null;
+    _registrationSuccessMessage = null;
     _authStatus = AuthStatus.unauthenticated;
     await _storage.delete(key: 'jwt_token');
     print('Sesión cerrada exitosamente');
@@ -349,6 +397,7 @@ class AuthProvider with ChangeNotifier {
     await _storage.deleteAll();
     _token = null;
     _user = null;
+    _registrationSuccessMessage = null;
     _authStatus = AuthStatus.unauthenticated;
     _notifyAfterBuild();
   }

@@ -15,6 +15,7 @@ class ComprasPendientesScreen extends StatefulWidget {
 
 class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
   late Future<void> _comprasFuture;
+  String _currentFilter = 'Pendiente';
 
   @override
   void initState() {
@@ -24,7 +25,17 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
 
   Future<void> _loadCompras() async {
     final provider = Provider.of<CompraProvider>(context, listen: false);
-    await provider.fetchComprasPendientes();
+    switch (_currentFilter) {
+      case 'Pendiente':
+        await provider.fetchComprasPendientes();
+        break;
+      case 'En revisión':
+        await provider.fetchComprasEnRevision();
+        break;
+      case 'Aprobada':
+        await provider.fetchComprasAprobadas();
+        break;
+    }
   }
 
   Future<void> _refreshCompras() async {
@@ -34,7 +45,124 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
     });
   }
 
+  void _changeFilter(String newFilter) {
+    if (_currentFilter == newFilter) return;
+    setState(() {
+      _currentFilter = newFilter;
+      _comprasFuture = _loadCompras();
+    });
+  }
+
+  Widget _buildFilterToggle() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildFilterButton(
+              'Pendiente',
+              Icons.hourglass_empty,
+              _currentFilter == 'Pendiente',
+              Colors.orange,
+            ),
+          ),
+          Expanded(
+            child: _buildFilterButton(
+              'En revisión',
+              Icons.assignment_outlined,
+              _currentFilter == 'En revisión',
+              Colors.blue,
+            ),
+          ),
+          Expanded(
+            child: _buildFilterButton(
+              'Aprobada',
+              Icons.check_circle_outline,
+              _currentFilter == 'Aprobada',
+              Colors.green,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterButton(
+      String label, IconData icon, bool isSelected, Color color) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: isSelected ? null : () => _changeFilter(label),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          margin: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isSelected ? color : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: isSelected ? Colors.white : Colors.grey.shade600,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey.shade600,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
+    String message;
+    switch (_currentFilter) {
+      case 'Pendiente':
+        message = 'No hay compras pendientes';
+        break;
+      case 'En revisión':
+        message = 'No hay compras en revisión';
+        break;
+      case 'Aprobada':
+        message = 'No hay compras aprobadas';
+        break;
+      default:
+        message = 'No hay compras';
+    }
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -55,16 +183,16 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'No hay compras pendientes',
-              style: TextStyle(
+            Text(
+              message,
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Las nuevas solicitudes de compra\naparecerán aquí automáticamente',
+              'Las solicitudes de compra\naparecerán aquí automáticamente',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey[600],
@@ -563,64 +691,11 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Compras Pendientes',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'Gestiona las solicitudes',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.white),
-                        onPressed: _refreshCompras,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildFilterToggle(),
               Expanded(
                 child: Container(
                   decoration: const BoxDecoration(
                     color: Color(0xFFF5F7FA),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30),
-                      topRight: Radius.circular(30),
-                    ),
                   ),
                   child: FutureBuilder(
                     future: _comprasFuture,
@@ -637,7 +712,7 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
                               return _buildErrorState(provider.error!);
                             }
 
-                            if (provider.comprasPendientes.isEmpty) {
+                            if (provider.compras.isEmpty) {
                               return _buildEmptyState();
                             }
 
@@ -645,12 +720,12 @@ class _ComprasPendientesScreenState extends State<ComprasPendientesScreen> {
                               onRefresh: _refreshCompras,
                               child: ListView.builder(
                                 padding:
-                                    const EdgeInsets.only(top: 20, bottom: 20),
-                                itemCount: provider.comprasPendientes.length,
+                                    const EdgeInsets.only(top: 8, bottom: 20),
+                                itemCount: provider.compras.length,
                                 itemBuilder: (context, index) =>
                                     _buildCompraCard(
                                   context,
-                                  provider.comprasPendientes[index],
+                                  provider.compras[index],
                                 ),
                               ),
                             );
