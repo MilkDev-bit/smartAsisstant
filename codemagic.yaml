@@ -1,46 +1,65 @@
 workflows:
-  smartassistant-ios-beta:
-    name: SmartAssistant iOS Beta
+  smartassistant-ios-fixed:
+    name: SmartAssistant iOS Fixed
     environment:
       groups:
-        - ios_credentials  # Para certificados de iOS
+        - ios_credentials
       flutter: stable
       xcode: latest
       cocoapods: default
     
     scripts:
-      - name: Set iOS deployment target
+      - name: Force iOS 15.0+ for Firebase
         script: |
-          # ✅ SOLUCIÓN: Actualizar deployment target a 15.0
-          echo "Updating iOS deployment target to 15.0..."
+          echo "=== FORCING iOS 15.0+ ==="
           
-          # Actualizar Podfile
+          # ✅ ELIMINAR y RECREAR Podfile completamente
           cd ios
-          if ! grep -q "platform :ios" Podfile; then
-            echo "platform :ios, '15.0'" > Podfile
-          else
-            sed -i '' 's/platform :ios, .*/platform :ios, '\''15.0'\''/' Podfile
-          fi
+          rm -f Podfile Podfile.lock
           
-          # Actualizar Info.plist si es necesario
+          # Crear nuevo Podfile con platform 15.0
+          cat > Podfile << EOF
+          # GENERATED FOR FIREBASE COMPATIBILITY
+          platform :ios, '15.0'
+          install! 'cocoapods', :deterministic_uuids => false
+          
+          target 'Runner' do
+            use_frameworks!
+            use_modular_headers!
+            
+            flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+          end
+          
+          post_install do |installer|
+            installer.pods_project.targets.each do |target|
+              flutter_additional_ios_build_settings(target)
+            end
+          end
+          EOF
+          
+          echo "✅ New Podfile created with iOS 15.0"
+          cat Podfile
           cd ..
       
-      - name: Get dependencies
-        script: flutter pub get
+      - name: Clean and get dependencies
+        script: |
+          flutter clean
+          flutter pub get
       
-      - name: Install iOS dependencies
+      - name: Pod install with force update
         script: |
           cd ios
+          pod cache clean --all
           pod repo update
-          pod install --repo-update
+          pod install --repo-update --verbose
           cd ..
       
       - name: Build iOS
-        script: flutter build ipa --release
+        script: |
+          flutter build ipa --release --no-codesign
     
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
     
     publishing:
       email:
